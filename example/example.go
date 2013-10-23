@@ -56,6 +56,6 @@ func main() {
 
 	http.Handle("/", http.FileServer(box))
 	go http.ListenAndServe(":8080", nil)
-	fmt.Printf("Serving files on :8123, press ctrl-C to exit")
+	fmt.Printf("Serving files on :8080, press ctrl-C to exit")
 	select {}
 }
