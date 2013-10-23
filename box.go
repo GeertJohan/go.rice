@@ -14,33 +14,50 @@ var (
 	embeds = make(map[string]*EmbeddedBox)
 )
 
-// Box defines a abstracted set of resources/files
+// Box abstracts a directory for resources/files.
+// It can either load files from disk, or from embedded code (when `rice --embed` was ran).
 type Box struct {
-	name  string
-	dir   string
-	embed *EmbeddedBox
+	name         string
+	absolutePath string
+	embed        *EmbeddedBox
 }
 
-// FindBox returns a Box instance
+// FindBox returns a Box instance for given name.
+// When the given name is a relative path, it's base path will be the calling pkg/cmd's source root.
+// When the given name is absolute, it's absolute. derp.
+// Make sure the path doesn't contain any sensitive information as it might be placed into generated go source (embedded).
 func FindBox(name string) (*Box, error) {
 	b := &Box{
 		name: name,
 	}
 
-	//++ see if box was embedded (RegisterEmbed(name, stuff..))
+	// when given name is an absolute path, set it as absolute path.
+	// otherwise calculate absolute path from caller source location
+	if filepath.IsAbs(name) {
+		b.absolutePath = name
+	} else {
+		// resolve absolute directory path (when )
+		err := b.resolveAbsolutePathFromCaller()
+		if err != nil {
+			return nil, err
+		}
+	}
 
-	// resolve absolute directory path
-	err := b.resolveDirFromStack()
+	// check if absolutePath exists on filesystem
+	info, err := os.Stat(b.absolutePath)
 	if err != nil {
 		return nil, err
 	}
+	// check if absolutePath is actually a directory
+	if !info.IsDir() {
+		return nil, errors.New("given name/path is not a directory")
+	}
 
-	//++ check if dir exists, error when not and not embedded
-
+	// all done
 	return b, nil
 }
 
-func (b *Box) resolveDirFromStack() error {
+func (b *Box) resolveAbsolutePathFromCaller() error {
 	_, callingGoFile, _, ok := runtime.Caller(2)
 	if !ok {
 		return errors.New("couldn't find caller on stack")
@@ -48,21 +65,18 @@ func (b *Box) resolveDirFromStack() error {
 
 	// resolve to proper path
 	pkgDir := filepath.Dir(callingGoFile)
-	b.dir = filepath.Join(pkgDir, b.name)
+	b.absolutePath = filepath.Join(pkgDir, b.name)
 	return nil
 }
 
-// Dir returns the absolute directory path for this box
+// AbsolutePath returns the absolute directory path for this box
 // The path might not exist, it's only valid at the time and machine the calling command was compiled.
-//++ TODO: should this method be exported?
-func (b *Box) Dir() string {
-	if b.dir == "" {
-		b.resolveDirFromStack()
-	}
-	return b.dir
+//++ TODO: should this method be exported? Whats the use? Should it be used? When it's being used, that defeats the purpose of this pkg..
+func (b *Box) AbsolutePath() string {
+	return b.absolutePath
 }
 
-// IsEmbedded indicates wether this file was embedded into the application
+// IsEmbedded indicates wether this box was embedded into the application
 func (b *Box) IsEmbedded() bool {
 	return b.embed != nil
 }
@@ -100,7 +114,7 @@ func (b *Box) Open(name string) (http.File, error) {
 	}
 
 	// perform os open
-	file, err := os.Open(filepath.Join(b.dir, name))
+	file, err := os.Open(filepath.Join(b.absolutePath, name))
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +138,7 @@ func (b *Box) Bytes(name string) ([]byte, error) {
 	}
 
 	// open actual file from disk
-	file, err := os.Open(filepath.Join(b.dir, name))
+	file, err := os.Open(filepath.Join(b.absolutePath, name))
 	if err != nil {
 		return nil, err
 	}
@@ -151,7 +165,7 @@ func (b *Box) String(name string) (string, error) {
 	}
 
 	// open actual file from disk
-	file, err := os.Open(filepath.Join(b.dir, name))
+	file, err := os.Open(filepath.Join(b.absolutePath, name))
 	if err != nil {
 		return "", err
 	}
