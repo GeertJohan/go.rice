@@ -4,10 +4,19 @@ go.rice is a [Go](http://golang.org) package that makes embedding files such as 
 The package wraps basic `os` pkg functionality. During development, opened files are read directly from disk.
 Upon deployment it is easy to embed all dependent files
 
+### What does it do?
+go.rice makes working with resource files easy. It doesn't matter whether the resource is html,css,js,image or a template.
+The first thing go.rice does is finding the correct absolute path for your files. Say you are executing a built go binary in your home directory, but your html/template files are located in `$GOPATH/src/yourCommand/templates`. go.rice will resolve any relative path given to `rice.Box(..)` relative to the directory of the go source file calling it.
+
+Ofcourse, this only works when the actual source is available. Sometimes you wish to simply push a binary. For instance, in server deployment. This is where the `rice` tool comes in. The `rice` tool analyses source code and finds call's to `rice.Box(..)` and embeds the files in the found directories. For each box a `.go` source file is generated.
+
 ### Installation
 
-Installation is simple. Use go get:
-`go get github.com/GeertJohan/go.rice`
+Use `go get` for the package and `go install` for the tool.
+```
+go get github.com/GeertJohan/go.rice
+go install github.com/GeertJohan/go.rice/rice
+```
 
 ### Usage
 

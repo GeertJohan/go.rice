@@ -9,11 +9,11 @@ func main() {
 
 	switch operation {
 	case "embed":
-		//++ take pwd and continue with that as path
-		//++ future: check len(args) to equal 0 or 1 (otherwise error). on 0 use pwd. on 1 use arg as path (abs or rel) to pkg to run embed on
+		fmt.Printf("embedding boxes for '%s'\n", path)
+		operationEmbed(path)
 	case "clean":
-		//++ clean embed files
-		//++ future: check len(args) to equal 0 or 1 (otherwise error). on 0 use pwd. on 1 use arg as path (abs or rel) to pkg to run embed on
+		fmt.Printf("cleaning embedded boxes for '%s'\n", path)
+		operationClean(path)
 	}
 
 	if flags.Verbose {
