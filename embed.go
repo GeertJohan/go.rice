@@ -12,6 +12,12 @@ type EmbeddedBox struct {
 	Files map[string]*EmbeddedFile // embedded files
 }
 
+type EmbeddedSingle struct {
+	Name string        // single name
+	Time time.Time     // embed time
+	File *EmbeddedFile // embedded file
+}
+
 // EmbeddedFile defines an embedded file
 type EmbeddedFile struct {
 	Name    string // filename
@@ -19,8 +25,8 @@ type EmbeddedFile struct {
 	ModTime time.Time
 }
 
-// RegisterEmbed registers an EmbeddedBox
-func RegisterEmbed(name string, box *EmbeddedBox) {
+// RegisterEmbeddedBox registers an EmbeddedBox
+func RegisterEmbeddedBox(name string, box *EmbeddedBox) {
 	if _, exists := embeds[name]; exists {
 		panic(fmt.Sprintf("EmbeddedBox with name `%s` exists already", name))
 	}

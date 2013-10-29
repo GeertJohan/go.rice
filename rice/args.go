@@ -4,6 +4,7 @@ import (
 	"fmt"
 	goflags "github.com/jessevdk/go-flags" // rename import to `goflags` (file scope) so we can use `var flags` (package scope)
 	"go/build"
+
 	"os"
 )
 
@@ -65,18 +66,27 @@ func parseArguments() {
 			fmt.Printf("error getting pwd: %s\n", err)
 			os.Exit(-1)
 		}
+		// find non-absolute path for this pwd
 		pkg, err := build.ImportDir(pwd, build.FindOnly)
 		if err != nil {
-			fmt.Printf("error loading current directory as package: %s\n", err)
+			fmt.Printf("error using current directory as import path: %s\n", err)
 			os.Exit(-1)
 		}
 		path = pkg.ImportPath
+		if flags.Verbose {
+			fmt.Printf("using pwd as path (%s)\n", path)
+			fmt.Println("")
+		}
 		return
 	}
 
 	if len(args) == 1 {
 		path = args[0]
 		args = make([]string, 0)
+		if flags.Verbose {
+			fmt.Printf("using argument as path (%s)\n", path)
+			fmt.Println("")
+		}
 		return
 	}
 }

@@ -95,8 +95,9 @@ func (b *Box) Time() time.Time {
 // Open opens a File from the box
 // Box implements http.FileSystem with this method.
 // This allows the use of Box with a http.FileServer.
-//   e.g.: http.Handle("/", http.FileServer(rice.Box("http-files").HTTPFileSystem()))
+//   e.g.: http.Handle("/", http.FileServer(rice.Box("http-files")))
 // If there is an error, it will be of type *os.PathError.
+//++ TODO: don't return http.File, but return box.File if that qualifies for http.FileSystem
 func (b *Box) Open(name string) (http.File, error) {
 	if b.IsEmbedded() {
 		ef := b.embed.Files[name]
