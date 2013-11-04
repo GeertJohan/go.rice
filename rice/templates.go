@@ -26,11 +26,9 @@ func init() {
 		Files: map[string]*rice.EmbeddedFile{
 			{{range .Files}}
 			"{{.FileName}}": &rice.EmbeddedFile{
-				Name: ` + "`" + `{{.FileName}}` + "`" + `,
-				Content: []byte{
-					//++ TODO
-				},
-				ModTime: time.Unix({{.ModTime}}, 0),
+				Filename:    ` + "`" + `{{.FileName}}` + "`" + `,
+				FileModTime: time.Unix({{.ModTime}}, 0),
+				Content:     string({{.Content | printf "%#v"}}), //++ TODO: optimize? (double allocation) or does compiler already optimize this?
 			},
 			{{end}}
 		},

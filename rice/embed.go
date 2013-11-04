@@ -12,7 +12,7 @@ import (
 )
 
 func operationEmbed(pkg *build.Package) {
-	// create one list
+	// create one list of files for this package
 	filenames := make([]string, 0, len(pkg.GoFiles)+len(pkg.CgoFiles))
 	filenames = append(filenames, pkg.GoFiles...)
 	filenames = append(filenames, pkg.CgoFiles...)
@@ -26,23 +26,31 @@ func operationEmbed(pkg *build.Package) {
 
 	// create map of boxes to embed
 	var boxMap = make(map[string]bool)
-	// loop over files
+
+	// loop over files, search for rice.FindBox(..) calls
 	for _, filename := range filenames {
+		// find full filepath
 		fullpath := filepath.Join(pkg.Dir, filename)
 		if flags.Verbose {
 			fmt.Printf("scanning file (%s)\n", fullpath)
 		}
+
+		// open source file
 		file, err := os.Open(fullpath)
 		if err != nil {
 			fmt.Printf("error opening file '%s': %s\n", filename, err)
 			os.Exit(-1)
 		}
 		defer file.Close()
+
+		// slurp source code
 		fileData, err := ioutil.ReadAll(file)
 		if err != nil {
 			fmt.Printf("error reading file '%s': %s\n", filename, err)
 			os.Exit(-1)
 		}
+
+		// find rice.FindBox(..) calls
 		matches := regexpBox.FindAllStringSubmatch(string(fileData), -1)
 		for _, match := range matches {
 			boxMap[match[1]] = true
@@ -52,6 +60,7 @@ func operationEmbed(pkg *build.Package) {
 		}
 	}
 
+	// notify user when no calls to rice.FindBox are made (is this an error and therefore os.Exit(-1) ?
 	if len(boxMap) == 0 {
 		fmt.Println("no calls to rice.FindBox() found")
 	}
@@ -61,13 +70,17 @@ func operationEmbed(pkg *build.Package) {
 	}
 
 	for boxname := range boxMap {
+		// find path and filename for this box
 		boxPath := filepath.Join(pkg.Dir, boxname)
 		boxFilename := boxname + `.rice-box.go`
+
+		// verbose info
 		if flags.Verbose {
 			fmt.Printf("embedding box (%s)\n", boxPath)
 			fmt.Printf("\tto file (%s)\n", boxFilename)
 		}
 
+		// create box datastructure (used by template)
 		box := &boxDataType{
 			Package: pkg.Name,
 			BoxName: boxname,
@@ -75,6 +88,7 @@ func operationEmbed(pkg *build.Package) {
 			Files:   make([]*fileDataType, 0),
 		}
 
+		// fill box datastructure with file data
 		filepath.Walk(boxPath, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				fmt.Printf("error walking box: %s\n", err)
@@ -95,12 +109,15 @@ func operationEmbed(pkg *build.Package) {
 			return nil
 		})
 
+		// create go file for box
 		boxFile, err := os.Create(boxFilename)
 		if err != nil {
 			fmt.Printf("error creating embedded box file: %s\n", err)
 			os.Exit(-1)
 		}
 		defer boxFile.Close()
+
+		// execute template (write result directly to file)
 		err = tmplEmbeddedBox.Execute(boxFile, box)
 		if err != nil {
 			fmt.Printf("error writing embedded box to file (template execute): %s\n", err)

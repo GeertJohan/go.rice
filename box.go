@@ -2,16 +2,18 @@ package rice
 
 import (
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"time"
 )
 
 var (
-	embeds = make(map[string]*EmbeddedBox)
+	embeds = make(map[string]*EmbeddedBox) // maps box name to *EmbeddedBox
 )
 
 // Box abstracts a directory for resources/files.
@@ -31,9 +33,19 @@ func FindBox(name string) (*Box, error) {
 		name: name,
 	}
 
+	// find if box is embedded
+	if embed := embeds[name]; embed != nil {
+		b.embed = embed
+		return b, nil
+	}
+	// box was not embedded
+
 	// when given name is an absolute path, set it as absolute path.
 	// otherwise calculate absolute path from caller source location
 	if filepath.IsAbs(name) {
+		// ++ think about abspath as name
+		fmt.Println("probably shouldn't allow this.. rice.FindBox(..) should only take relative arguments, as the box is always inside the go package.. Might create FindBoxAbs(name, absPath) to work with box outside path.")
+		os.Exit(-2)
 		b.absolutePath = name
 	} else {
 		// resolve absolute directory path (when )
@@ -100,6 +112,8 @@ func (b *Box) Time() time.Time {
 //++ TODO: don't return http.File, but return box.File if that qualifies for http.FileSystem
 func (b *Box) Open(name string) (http.File, error) {
 	if b.IsEmbedded() {
+		name = strings.TrimLeft(name, "/")
+		fmt.Printf("opening %s\n", name)
 		ef := b.embed.Files[name]
 		if ef == nil {
 			return nil, &os.PathError{
@@ -132,8 +146,8 @@ func (b *Box) Bytes(name string) ([]byte, error) {
 			return nil, os.ErrNotExist
 		}
 		// clone byteSlice
-		cpy := make([]byte, len(ef.Content))
-		copy(ef.Content, cpy)
+		cpy := make([]byte, 0, len(ef.Content))
+		cpy = append(cpy, ef.Content...)
 		// return copied bytes
 		return cpy, nil
 	}
@@ -162,7 +176,7 @@ func (b *Box) String(name string) (string, error) {
 			return "", os.ErrNotExist
 		}
 		// return as string
-		return string(ef.Content), nil
+		return ef.Content, nil
 	}
 
 	// open actual file from disk

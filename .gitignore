@@ -1,2 +1,5 @@
 /example/example
 /rice/rice
+
+*.rice-box.go
+*.rice-single.go
