@@ -61,7 +61,7 @@ This project is licensed under a Simplified BSD license. Please read the [LICENS
 
 ### Package documentation
 
-You will find package documentation at [godoc.org/github.com/GeertJohan/go.rice][pkgdoc].
+You will find package documentation at [godoc.org/github.com/GeertJohan/go.rice][godoc].
 
 
  [license]: https://github.com/GeertJohan/go.rice/blob/master/LICENSE
