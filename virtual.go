@@ -62,7 +62,11 @@ func (vf *virtualFile) Seek(offset int64, whence int) (int64, error) {
 	}
 
 	if e != nil {
-		return 0, &os.PathError{"seek", vf.Filename, e}
+		return 0, &os.PathError{
+			Op:   "seek",
+			Path: vf.Filename,
+			Err:  e,
+		}
 	}
 
 	return vf.offset, nil
@@ -100,5 +104,9 @@ func (vd *virtualDir) Read(bts []byte) (int, error) {
 }
 
 func (vd *virtualDir) Seek(offset int64, whence int) (int64, error) {
-	return 0, &os.PathError{"seek", vd.Filename, syscall.EISDIR}
+	return 0, &os.PathError{
+		Op:   "seek",
+		Path: vf.Filename,
+		Err:  syscall.EISDIR,
+	}
 }
