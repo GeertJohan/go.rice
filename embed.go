@@ -26,7 +26,8 @@ type EmbeddedSingle struct {
 type EmbeddedDir struct {
 	Filename   string
 	DirModTime time.Time
-	ChildDirs  []*EmbeddedDir
+	ChildDirs  []*EmbeddedDir  // both implement os.FileInfo, combined they can be returned by virtualDir.Readdir()
+	ChildFiles []*EmbeddedFile // both implement os.FileInfo, combined they can be returned by virtualDir.Readdir()
 }
 
 // Name returns the base name of the directory
