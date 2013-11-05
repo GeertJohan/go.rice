@@ -106,7 +106,7 @@ func (vd *virtualDir) Read(bts []byte) (int, error) {
 func (vd *virtualDir) Seek(offset int64, whence int) (int64, error) {
 	return 0, &os.PathError{
 		Op:   "seek",
-		Path: vf.Filename,
+		Path: vd.Filename,
 		Err:  syscall.EISDIR,
 	}
 }
