@@ -8,10 +8,11 @@ import (
 
 // EmbeddedBox defines an embedded box
 type EmbeddedBox struct {
-	Name      string                   // box name
-	Time      time.Time                // embed time
-	Files     map[string]*EmbeddedFile // embedded files
-	Structure *EmbeddedDir             //++ root dir
+	Name    string                   // box name
+	Time    time.Time                // embed time
+	Files   map[string]*EmbeddedFile // embedded files by full path
+	Dirs    map[string]*EmbeddedDir  // embedded dirs by full path
+	RootDir *EmbeddedDir             // root directory for this box
 }
 
 // EmbeddedSingle defines an embedded single

@@ -94,7 +94,12 @@ func operationEmbed(pkg *build.Package) {
 				fmt.Printf("error walking box: %s\n", err)
 				os.Exit(-1)
 			}
-			if !info.IsDir() {
+
+			//++ add references and identifiers (a, b, c, d, e, f, g, h, i, j, k, etc.)
+
+			if info.IsDir() {
+				//++ dirDataType and stuff
+			} else {
 				fileData := &fileDataType{
 					FileName: strings.TrimPrefix(strings.TrimPrefix(path, boxPath), "/"),
 					ModTime:  info.ModTime().Unix(),

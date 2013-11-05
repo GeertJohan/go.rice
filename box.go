@@ -112,15 +112,31 @@ func (b *Box) Time() time.Time {
 //++ TODO: don't return http.File, but return box.File if that qualifies for http.FileSystem
 func (b *Box) Open(name string) (http.File, error) {
 	if b.IsEmbedded() {
-		name = strings.TrimLeft(name, "/")
 		fmt.Printf("opening %s\n", name)
+
+		// fast return for root
+		if name == "/" {
+			return newVirtualDir(b.embed.RootDir), nil
+		}
+
+		// trim prefix (paths are relative to box)
+		name = strings.TrimPrefix(name, "/")
+
+		// search for file
 		ef := b.embed.Files[name]
 		if ef == nil {
-			return nil, &os.PathError{
-				Op:   "open",
-				Path: name,
-				Err:  os.ErrNotExist,
+			// file not found, try dir
+			ed := b.embed.Dirs[name]
+			if ed == nil {
+				// dir not found, error out
+				return nil, &os.PathError{
+					Op:   "open",
+					Path: name,
+					Err:  os.ErrNotExist,
+				}
 			}
+			vd := newVirtualDir(ed)
+			return vd, nil
 		}
 
 		// box is embedded

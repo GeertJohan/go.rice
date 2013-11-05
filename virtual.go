@@ -11,10 +11,11 @@ var ErrNotImplemented = errors.New("not implemented yet")
 
 // virtualFile implements rice.File, it requires the box to be embedded (otherwise, the box should use os package to read files from disk)
 type virtualFile struct {
-	*EmbeddedFile
-	offset int64 // read position on the virtual file
+	*EmbeddedFile       // the actual embedded file, embedded to obtain methods
+	offset        int64 // read position on the virtual file
 }
 
+// create a new virtualFile for given EmbeddedFile
 func newVirtualFile(ef *EmbeddedFile) *virtualFile {
 	vf := &virtualFile{
 		EmbeddedFile: ef,
@@ -77,7 +78,8 @@ type virtualDir struct {
 	*EmbeddedDir
 }
 
-func newvirtualDir(ed *EmbeddedDir) *virtualDir {
+// create a new virtualDir for given EmbeddedDir
+func newVirtualDir(ed *EmbeddedDir) *virtualDir {
 	vf := &virtualDir{
 		EmbeddedDir: ed,
 	}
