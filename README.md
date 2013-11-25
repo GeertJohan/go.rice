@@ -57,7 +57,8 @@ This project is licensed under a Simplified BSD license. Please read the [LICENS
 ### Todo
  - rice.FindSingle() that loads and embeds a single file as oposed to a directory. It should have methods .String(), .Bytes() and .File()
  - think about MustString and MustBytes methods, which wrap String and Bytes, but panic on error and have single return value (string or []byte)
- - The rice tool uses a simple regexp to find calls to `rice.Box(..)`, this should use `go/ast` or maybe `go.tools/oracle`?
+ - The rice tool uses a simple regexp to find calls to `rice.Box(..)`, this should be changed to `go/ast` or maybe `go.tools/oracle`?
+ - idea, os/arch dependent embeds. rice checks if embedding file has _os_arch or build flags. If box is not requested by file without build-flags, then the buildflags are applied to the embed file.
 
 ### Package documentation
 
