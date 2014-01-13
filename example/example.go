@@ -17,7 +17,6 @@ func main() {
 		log.Fatalf("error opening rice.Box: %s\n", err)
 	}
 	spew.Dump(box)
-	log.Printf("box absolue path: %s", box.AbsolutePath())
 
 	contentString, err := box.String("file.txt")
 	if err != nil {
@@ -54,7 +53,7 @@ func main() {
 	}
 	tmplMessage.Execute(os.Stdout, map[string]string{"Message": "Hello, world!"})
 
-	http.Handle("/", http.FileServer(box))
+	http.Handle("/", http.FileServer(box.HTTPBox()))
 	go http.ListenAndServe(":8080", nil)
 	fmt.Printf("Serving files on :8080, press ctrl-C to exit")
 	select {}

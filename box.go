@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -43,16 +42,13 @@ func FindBox(name string) (*Box, error) {
 	// when given name is an absolute path, set it as absolute path.
 	// otherwise calculate absolute path from caller source location
 	if filepath.IsAbs(name) {
-		// ++ think about abspath as name
-		fmt.Println("probably shouldn't allow this.. rice.FindBox(..) should only take relative arguments, as the box is always inside the go package.. Might create FindBoxAbs(name, absPath) to work with box outside path.")
-		os.Exit(-2)
-		b.absolutePath = name
-	} else {
-		// resolve absolute directory path (when )
-		err := b.resolveAbsolutePathFromCaller()
-		if err != nil {
-			return nil, err
-		}
+		return nil, errors.New("given name/path is aboslute")
+	}
+
+	// resolve absolute directory path
+	err := b.resolveAbsolutePathFromCaller()
+	if err != nil {
+		return nil, err
 	}
 
 	// check if absolutePath exists on filesystem
@@ -69,6 +65,16 @@ func FindBox(name string) (*Box, error) {
 	return b, nil
 }
 
+// MustFindBox returns a Box instance for given name, like FindBox does.
+// It does not return an error, instead it panics when an error occurs.
+func MustFindBox(name string) *Box {
+	box, err := FindBox(name)
+	if err != nil {
+		panic(err)
+	}
+	return box
+}
+
 func (b *Box) resolveAbsolutePathFromCaller() error {
 	_, callingGoFile, _, ok := runtime.Caller(2)
 	if !ok {
@@ -79,13 +85,6 @@ func (b *Box) resolveAbsolutePathFromCaller() error {
 	pkgDir := filepath.Dir(callingGoFile)
 	b.absolutePath = filepath.Join(pkgDir, b.name)
 	return nil
-}
-
-// AbsolutePath returns the absolute directory path for this box
-// The path might not exist, it's only valid at the time and machine the calling command was compiled.
-//++ TODO: should this method be exported? Whats the use? Should it be used? When it's being used, that defeats the purpose of this pkg..
-func (b *Box) AbsolutePath() string {
-	return b.absolutePath
 }
 
 // IsEmbedded indicates wether this box was embedded into the application
@@ -105,19 +104,15 @@ func (b *Box) Time() time.Time {
 }
 
 // Open opens a File from the box
-// Box implements http.FileSystem with this method.
-// This allows the use of Box with a http.FileServer.
-//   e.g.: http.Handle("/", http.FileServer(rice.Box("http-files")))
 // If there is an error, it will be of type *os.PathError.
-//++ TODO: don't return http.File, but return box.File if that qualifies for http.FileSystem
-func (b *Box) Open(name string) (http.File, error) {
+func (b *Box) Open(name string) (*File, error) {
 	if b.IsEmbedded() {
 		fmt.Printf("opening %s\n", name)
 
-		// fast return for root
-		if name == "/" {
-			return newVirtualDir(b.embed.RootDir), nil
-		}
+		// // fast return for root
+		// if name == "/" {
+		// 	return &File{virtualD: newVirtualDir(b.embed.RootDir)}, nil
+		// }
 
 		// trim prefix (paths are relative to box)
 		name = strings.TrimPrefix(name, "/")
@@ -136,12 +131,12 @@ func (b *Box) Open(name string) (http.File, error) {
 				}
 			}
 			vd := newVirtualDir(ed)
-			return vd, nil
+			return &File{virtualD: vd}, nil
 		}
 
 		// box is embedded
 		vf := newVirtualFile(ef)
-		return vf, nil
+		return &File{virtualF: vf}, nil
 	}
 
 	// perform os open
@@ -149,7 +144,7 @@ func (b *Box) Open(name string) (http.File, error) {
 	if err != nil {
 		return nil, err
 	}
-	return file, nil
+	return &File{realF: file}, nil
 }
 
 // Bytes returns the content of the file with given name as []byte

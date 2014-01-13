@@ -1,9 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"go/build"
+	"go/format"
+	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -21,7 +25,7 @@ func operationEmbed(pkg *build.Package) {
 	regexpBox, err := regexp.Compile(`rice\.FindBox\(["` + "`" + `]{1}([a-zA-Z0-9\\/\.-]+)["` + "`" + `]{1}\)`)
 	if err != nil {
 		fmt.Printf("error compiling rice.FindBox regexp: %s\n", err)
-		os.Exit(-1)
+		os.Exit(1)
 	}
 
 	// create map of boxes to embed
@@ -31,15 +35,13 @@ func operationEmbed(pkg *build.Package) {
 	for _, filename := range filenames {
 		// find full filepath
 		fullpath := filepath.Join(pkg.Dir, filename)
-		if flags.Verbose {
-			fmt.Printf("scanning file (%s)\n", fullpath)
-		}
+		verbosef("scanning file %s\n", fullpath)
 
 		// open source file
 		file, err := os.Open(fullpath)
 		if err != nil {
 			fmt.Printf("error opening file '%s': %s\n", filename, err)
-			os.Exit(-1)
+			os.Exit(1)
 		}
 		defer file.Close()
 
@@ -47,38 +49,32 @@ func operationEmbed(pkg *build.Package) {
 		fileData, err := ioutil.ReadAll(file)
 		if err != nil {
 			fmt.Printf("error reading file '%s': %s\n", filename, err)
-			os.Exit(-1)
+			os.Exit(1)
 		}
 
 		// find rice.FindBox(..) calls
 		matches := regexpBox.FindAllStringSubmatch(string(fileData), -1)
 		for _, match := range matches {
 			boxMap[match[1]] = true
-			if flags.Verbose {
-				fmt.Printf("\tfound box (%s)\n", match[1])
-			}
+			verbosef("\tfound box '%s'\n", match[1])
 		}
 	}
 
-	// notify user when no calls to rice.FindBox are made (is this an error and therefore os.Exit(-1) ?
+	// notify user when no calls to rice.FindBox are made (is this an error and therefore os.Exit(1) ?
 	if len(boxMap) == 0 {
 		fmt.Println("no calls to rice.FindBox() found")
 	}
 
-	if flags.Verbose {
-		fmt.Println("")
-	}
+	verbosef("\n")
 
 	for boxname := range boxMap {
 		// find path and filename for this box
 		boxPath := filepath.Join(pkg.Dir, boxname)
-		boxFilename := boxname + `.rice-box.go`
+		boxFilename := strings.Replace(boxname, "/", "-", -1) + `.rice-box.go`
 
 		// verbose info
-		if flags.Verbose {
-			fmt.Printf("embedding box (%s)\n", boxPath)
-			fmt.Printf("\tto file (%s)\n", boxFilename)
-		}
+		verbosef("embedding box '%s'\n", boxname)
+		verbosef("\tto file %s\n", boxFilename)
 
 		// create box datastructure (used by template)
 		box := &boxDataType{
@@ -86,51 +82,82 @@ func operationEmbed(pkg *build.Package) {
 			BoxName: boxname,
 			UnixNow: time.Now().Unix(),
 			Files:   make([]*fileDataType, 0),
+			Dirs:    make(map[string]*dirDataType),
 		}
 
 		// fill box datastructure with file data
 		filepath.Walk(boxPath, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				fmt.Printf("error walking box: %s\n", err)
-				os.Exit(-1)
+				os.Exit(1)
 			}
 
-			//++ add references and identifiers (a, b, c, d, e, f, g, h, i, j, k, etc.)
-
 			if info.IsDir() {
-				//++ dirDataType and stuff
+				dirData := &dirDataType{
+					Identifier: "dir_" + nextIdentifier(),
+					FileName:   strings.TrimPrefix(strings.TrimPrefix(path, boxPath), "/"),
+					ModTime:    info.ModTime().Unix(),
+				}
+				verbosef("\tincludes dir: '%s'\n", dirData.FileName)
+				box.Dirs[dirData.FileName] = dirData
+
+				// add tree entry (skip for root, it'll create a recursion)
+				if dirData.FileName != "" {
+					pathParts := strings.Split(dirData.FileName, "/")
+					parentDir := box.Dirs[strings.Join(pathParts[:len(pathParts)-1], "/")]
+					parentDir.ChildDirs = append(parentDir.ChildDirs, dirData)
+				}
 			} else {
 				fileData := &fileDataType{
-					FileName: strings.TrimPrefix(strings.TrimPrefix(path, boxPath), "/"),
-					ModTime:  info.ModTime().Unix(),
+					Identifier: "file_" + nextIdentifier(),
+					FileName:   strings.TrimPrefix(strings.TrimPrefix(path, boxPath), "/"),
+					ModTime:    info.ModTime().Unix(),
 				}
+				verbosef("\tincludes file: '%s'\n", fileData.FileName)
 				fileData.Content, err = ioutil.ReadFile(path)
 				if err != nil {
 					fmt.Printf("error reading file content while walking box: %s\n", err)
-					os.Exit(-1)
+					os.Exit(1)
 				}
 				box.Files = append(box.Files, fileData)
+
+				// add tree entry
+				pathParts := strings.Split(fileData.FileName, "/")
+				parentDir := box.Dirs[strings.Join(pathParts[:len(pathParts)-1], "/")]
+				parentDir.ChildFiles = append(parentDir.ChildFiles, fileData)
 			}
 			return nil
 		})
 
+		embedSourceUnformated := bytes.NewBuffer(make([]byte, 0))
+
+		// execute template to buffer
+		err = tmplEmbeddedBox.Execute(embedSourceUnformated, box)
+		if err != nil {
+			log.Printf("error writing embedded box to file (template execute): %s\n", err)
+			os.Exit(1)
+		}
+
+		// format the source code
+		embedSource, err := format.Source(embedSourceUnformated.Bytes())
+		if err != nil {
+			log.Printf("error formatting embedSource: %s\n", err)
+			os.Exit(1)
+		}
+
 		// create go file for box
 		boxFile, err := os.Create(boxFilename)
 		if err != nil {
-			fmt.Printf("error creating embedded box file: %s\n", err)
-			os.Exit(-1)
+			log.Printf("error creating embedded box file: %s\n", err)
+			os.Exit(1)
 		}
 		defer boxFile.Close()
 
-		// execute template (write result directly to file)
-		err = tmplEmbeddedBox.Execute(boxFile, box)
+		// write source to file
+		_, err = io.Copy(boxFile, bytes.NewBuffer(embedSource))
 		if err != nil {
-			fmt.Printf("error writing embedded box to file (template execute): %s\n", err)
-			os.Exit(-1)
+			log.Printf("error writing embedSource to file: %s\n", err)
+			os.Exit(1)
 		}
-	}
-
-	if flags.Verbose {
-		fmt.Println("")
 	}
 }

@@ -73,20 +73,14 @@ func parseArguments() {
 			os.Exit(-1)
 		}
 		path = pkg.ImportPath
-		if flags.Verbose {
-			fmt.Printf("using pwd as path (%s)\n", path)
-			fmt.Println("")
-		}
+		verbosef("using pwd as path (%s)\n", path)
 		return
 	}
 
 	if len(args) == 1 {
 		path = args[0]
 		args = make([]string, 0)
-		if flags.Verbose {
-			fmt.Printf("using argument as path (%s)\n", path)
-			fmt.Println("")
-		}
+		verbosef("using argument as path (%s)\n", path)
 		return
 	}
 }

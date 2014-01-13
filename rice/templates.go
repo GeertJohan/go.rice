@@ -22,8 +22,7 @@ import (
 func init() {
 
 	// define files
-	{{range .Files}}
-	f{{.Identifier}} := &rice.EmbeddedFile{
+	{{range .Files}}{{.Identifier}} := &rice.EmbeddedFile{
 		Filename:    ` + "`" + `{{.FileName}}` + "`" + `,
 		FileModTime: time.Unix({{.ModTime}}, 0),
 		Content:     string({{.Content | printf "%#v"}}), //++ TODO: optimize? (double allocation) or does compiler already optimize this?
@@ -31,41 +30,35 @@ func init() {
 	{{end}}
 
 	// define dirs
-	{{range .Dirs}}
-	d{{.Identifier}} := &rice.EmbeddedDir{
+	{{range .Dirs}}{{.Identifier}} := &rice.EmbeddedDir{
 		Filename:    ` + "`" + `{{.FileName}}` + "`" + `,
-		FileModTime: time.Unix({{.ModTime}}, 0),
+		DirModTime: time.Unix({{.ModTime}}, 0),
 		ChildFiles:  []*rice.EmbeddedFile{
-			{{range .ChildFiles}}
-			f{{.Identifier}},
+			{{range .ChildFiles}}{{.Identifier}}, // {{.FileName}}
 			{{end}}
-		}
+		},
 	}
 	{{end}}
 
 	// link ChildDirs
-	{{range .Dirs}}
-	d{{.Identifier}}.ChildDirs = []*rice.EmbeddedDir{
-		{{range .ChildDirs}}
-		d{{.Identifier}},
+	{{range .Dirs}}{{.Identifier}}.ChildDirs = []*rice.EmbeddedDir{
+		{{range .ChildDirs}}{{.Identifier}}, // {{.FileName}}
 		{{end}}
 	}
 	{{end}}
 
+	// register embeddedBox
 	rice.RegisterEmbeddedBox(` + "`" + `{{.BoxName}}` + "`" + `, &rice.EmbeddedBox{
 		Name: ` + "`" + `{{.BoxName}}` + "`" + `,
 		Time: time.Unix({{.UnixNow}}, 0),
 		Dirs: map[string]*rice.EmbeddedDir{
-			{{range .Dirs}}
-			"{{.FileName}}": d{{.Identifier}},
-			{{end}}
-		}
-		Files: map[string]*rice.EmbeddedFile{
-			{{range .Files}}
-			"{{.FileName}}": f{{.Identifier}},
+			{{range .Dirs}}"{{.FileName}}": {{.Identifier}},
 			{{end}}
 		},
-		RootDir: da,
+		Files: map[string]*rice.EmbeddedFile{
+			{{range .Files}}"{{.FileName}}": {{.Identifier}},
+			{{end}}
+		},
 	})
 }`)
 	if err != nil {
@@ -79,6 +72,7 @@ type boxDataType struct {
 	BoxName string
 	UnixNow int64
 	Files   []*fileDataType
+	Dirs    map[string]*dirDataType
 }
 
 type singleDataType struct {

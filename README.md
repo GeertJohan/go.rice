@@ -22,9 +22,9 @@ go install github.com/GeertJohan/go.rice/rice
 
 Import the package: `import "github.com/GeertJohan/go.rice"`
 
-**Serving HTTP from a rice.Box**
+**Serving a static content folder over HTTP with a rice Box**
 ```go
-http.Handle("/", http.FileServer(rice.FindBox("http-files")))
+http.Handle("/", http.FileServer(rice.MustFindBox("http-files").HTTPBox()))
 http.ListenAndServe(":8080", nil)
 ```
 
