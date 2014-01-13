@@ -3,6 +3,7 @@ package rice
 import (
 	"errors"
 	"fmt"
+	"github.com/GeertJohan/go.rice/embedded"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -11,16 +12,12 @@ import (
 	"time"
 )
 
-var (
-	embeds = make(map[string]*EmbeddedBox) // maps box name to *EmbeddedBox
-)
-
 // Box abstracts a directory for resources/files.
 // It can either load files from disk, or from embedded code (when `rice --embed` was ran).
 type Box struct {
 	name         string
 	absolutePath string
-	embed        *EmbeddedBox
+	embed        *embedded.EmbeddedBox
 }
 
 // FindBox returns a Box instance for given name.
@@ -33,7 +30,7 @@ func FindBox(name string) (*Box, error) {
 	}
 
 	// find if box is embedded
-	if embed := embeds[name]; embed != nil {
+	if embed := embedded.EmbeddedBoxes[name]; embed != nil {
 		b.embed = embed
 		return b, nil
 	}

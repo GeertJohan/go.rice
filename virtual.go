@@ -2,6 +2,7 @@ package rice
 
 import (
 	"errors"
+	"github.com/GeertJohan/go.rice/embedded"
 	"os"
 	"syscall"
 )
@@ -15,13 +16,13 @@ var ErrNotImplemented = errors.New("not implemented yet")
 // virtualFile wraps an *EmbeddedFile for a call to Box.Open() and virtualizes 'read cursor' (offset) and 'closing'.
 // virtualFile is only internally visible and should be exposed through rice.File
 type virtualFile struct {
-	*EmbeddedFile       // the actual embedded file, embedded to obtain methods
-	offset        int64 // read position on the virtual file
-	closed        bool  // closed when true
+	*embedded.EmbeddedFile       // the actual embedded file, embedded to obtain methods
+	offset                 int64 // read position on the virtual file
+	closed                 bool  // closed when true
 }
 
 // create a new virtualFile for given EmbeddedFile
-func newVirtualFile(ef *EmbeddedFile) *virtualFile {
+func newVirtualFile(ef *embedded.EmbeddedFile) *virtualFile {
 	vf := &virtualFile{
 		EmbeddedFile: ef,
 		offset:       0,
@@ -118,12 +119,12 @@ func (vf *virtualFile) seek(offset int64, whence int) (int64, error) {
 // vritualDir wraps an *EmbeddedDir for a call to Box.Open() and virtualizes 'closing'.
 // vritualDir is only internally visible and should be exposed through rice.File
 type virtualDir struct {
-	*EmbeddedDir
+	*embedded.EmbeddedDir
 	closed bool
 }
 
 // create a new virtualDir for given EmbeddedDir
-func newVirtualDir(ed *EmbeddedDir) *virtualDir {
+func newVirtualDir(ed *embedded.EmbeddedDir) *virtualDir {
 	vd := &virtualDir{
 		EmbeddedDir: ed,
 		closed:      false,
