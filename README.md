@@ -1,14 +1,13 @@
 ## go.rice
 
-go.rice is a [Go](http://golang.org) package that makes embedding files such as html,js,css and images easy.
-The package wraps basic `os` pkg functionality. During development, opened files are read directly from disk.
-Upon deployment it is easy to embed all dependent files
+go.rice is a [Go](http://golang.org) package that makes working with resources such as html,js,css,images and templates very easy.
+The package wraps basic `os` pkg functionality. During development `go.rice` will load required files directly from disk.
+Upon deployment it is easy to embed all dependent files using the `rice` tool, without changing the source code for your package.
 
 ### What does it do?
-go.rice makes working with resource files easy. It doesn't matter whether the resource is html,css,js,image or a template.
-The first thing go.rice does is finding the correct absolute path for your files. Say you are executing a built go binary in your home directory, but your html/template files are located in `$GOPATH/src/yourCommand/templates`. go.rice will resolve any relative path given to `rice.Box(..)` relative to the directory of the go source file calling it.
+The first thing go.rice does is finding the correct absolute path for your resource files. Say you are executing go binary in your home directory, but your html files are located in `$GOPATH/src/webApplication/html-files`. `go.rice` will lookup the aboslute path for that directory. The only thing you have to do is include the resources using `rice.FindBox("html-files")`.
 
-Ofcourse, this only works when the actual source is available. Sometimes you wish to simply push a binary. For instance, in server deployment. This is where the `rice` tool comes in. The `rice` tool analyses source code and finds call's to `rice.Box(..)` and embeds the files in the found directories. For each box a `.go` source file is generated.
+This only works when the source is available to the machine executing the binary. This is always the case when the binary was installed with `go get` or `go install`. It might happen that you wish to simply provide a binary, without source. For instance in server deployment. The `rice` tool analyses source code and finds call's to `rice.FindBox(..)` and embeds the required directories an "embeddex box". For each box a `.go` source file is generated containing the resources inside the box.
 
 ### Installation
 
@@ -18,7 +17,7 @@ go get github.com/GeertJohan/go.rice
 go install github.com/GeertJohan/go.rice/rice
 ```
 
-### Usage
+### Usage & examples
 
 Import the package: `import "github.com/GeertJohan/go.rice"`
 
