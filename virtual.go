@@ -31,6 +31,8 @@ func newVirtualFile(ef *embedded.EmbeddedFile) *virtualFile {
 	return vf
 }
 
+//++ TODO check for nil pointers in all these methods. When so: return os.PathError with Err: os.ErrInvalid
+
 func (vf *virtualFile) close() error {
 	if vf.closed {
 		return &os.PathError{
