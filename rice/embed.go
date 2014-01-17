@@ -148,7 +148,7 @@ func operationEmbed(pkg *build.Package) {
 		}
 
 		// create go file for box
-		boxFile, err := os.Create(boxFilename)
+		boxFile, err := os.Create(filepath.Join(pkg.Dir, boxFilename))
 		if err != nil {
 			log.Printf("error creating embedded box file: %s\n", err)
 			os.Exit(1)
