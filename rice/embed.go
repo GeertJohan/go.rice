@@ -70,7 +70,9 @@ func operationEmbed(pkg *build.Package) {
 	for boxname := range boxMap {
 		// find path and filename for this box
 		boxPath := filepath.Join(pkg.Dir, boxname)
-		boxFilename := strings.Replace(boxname, "/", "-", -1) + `.rice-box.go`
+		boxFilename := strings.Replace(boxname, "/", "-", -1)
+		boxFilename = strings.Replace(boxFilename, "..", "back", -1)
+		boxFilename = boxFilename + `.rice-box.go`
 
 		// verbose info
 		verbosef("embedding box '%s'\n", boxname)
