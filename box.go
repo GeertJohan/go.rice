@@ -20,11 +20,7 @@ type Box struct {
 	embed        *embedded.EmbeddedBox
 }
 
-// FindBox returns a Box instance for given name.
-// When the given name is a relative path, it's base path will be the calling pkg/cmd's source root.
-// When the given name is absolute, it's absolute. derp.
-// Make sure the path doesn't contain any sensitive information as it might be placed into generated go source (embedded).
-func FindBox(name string) (*Box, error) {
+func findBox(name string) (*Box, error) {
 	b := &Box{
 		name: name,
 	}
@@ -62,10 +58,18 @@ func FindBox(name string) (*Box, error) {
 	return b, nil
 }
 
+// FindBox returns a Box instance for given name.
+// When the given name is a relative path, it's base path will be the calling pkg/cmd's source root.
+// When the given name is absolute, it's absolute. derp.
+// Make sure the path doesn't contain any sensitive information as it might be placed into generated go source (embedded).
+func FindBox(name string) (*Box, error) {
+	return findBox(name)
+}
+
 // MustFindBox returns a Box instance for given name, like FindBox does.
 // It does not return an error, instead it panics when an error occurs.
 func MustFindBox(name string) *Box {
-	box, err := FindBox(name)
+	box, err := findBox(name)
 	if err != nil {
 		panic(err)
 	}
@@ -73,7 +77,7 @@ func MustFindBox(name string) *Box {
 }
 
 func (b *Box) resolveAbsolutePathFromCaller() error {
-	_, callingGoFile, _, ok := runtime.Caller(2)
+	_, callingGoFile, _, ok := runtime.Caller(3)
 	if !ok {
 		return errors.New("couldn't find caller on stack")
 	}
