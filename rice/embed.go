@@ -22,7 +22,7 @@ func operationEmbed(pkg *build.Package) {
 	filenames = append(filenames, pkg.CgoFiles...)
 
 	// prepare regex to find calls to rice.FindBox(..)
-	regexpBox, err := regexp.Compile(`rice\.FindBox\(["` + "`" + `]{1}([a-zA-Z0-9\\/\.-]+)["` + "`" + `]{1}\)`)
+	regexpBox, err := regexp.Compile(`rice\.(?:Must)?FindBox\(["` + "`" + `]{1}([a-zA-Z0-9\\/\.-]+)["` + "`" + `]{1}\)`)
 	if err != nil {
 		fmt.Printf("error compiling rice.FindBox regexp: %s\n", err)
 		os.Exit(1)
