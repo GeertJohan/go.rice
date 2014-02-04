@@ -2,7 +2,6 @@ package rice
 
 import (
 	"errors"
-	"fmt"
 	"github.com/GeertJohan/go.rice/embedded"
 	"io/ioutil"
 	"os"
@@ -108,7 +107,6 @@ func (b *Box) Time() time.Time {
 // If there is an error, it will be of type *os.PathError.
 func (b *Box) Open(name string) (*File, error) {
 	if b.IsEmbedded() {
-		fmt.Printf("opening %s\n", name)
 
 		// // fast return for root
 		// if name == "/" {
