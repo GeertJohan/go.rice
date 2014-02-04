@@ -115,11 +115,6 @@ func (b *Box) Open(name string) (*File, error) {
 			fmt.Println("Box is embedded")
 		}
 
-		// // fast return for root
-		// if name == "/" {
-		// 	return &File{virtualD: newVirtualDir(b.embed.RootDir)}, nil
-		// }
-
 		// trim prefix (paths are relative to box)
 		name = strings.TrimLeft(name, "/")
 		if Debug {
