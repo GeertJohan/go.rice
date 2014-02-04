@@ -2,6 +2,7 @@ package rice
 
 import (
 	"errors"
+	"fmt"
 	"github.com/GeertJohan/go.rice/embedded"
 	"io/ioutil"
 	"os"
@@ -106,7 +107,13 @@ func (b *Box) Time() time.Time {
 // Open opens a File from the box
 // If there is an error, it will be of type *os.PathError.
 func (b *Box) Open(name string) (*File, error) {
+	if Debug {
+		fmt.Printf("Open(%s)\n", name)
+	}
 	if b.IsEmbedded() {
+		if Debug {
+			fmt.Println("Box is embedded")
+		}
 
 		// // fast return for root
 		// if name == "/" {
@@ -114,14 +121,23 @@ func (b *Box) Open(name string) (*File, error) {
 		// }
 
 		// trim prefix (paths are relative to box)
-		name = strings.TrimPrefix(name, "/")
+		name = strings.TrimLeft(name, "/")
+		if Debug {
+			fmt.Printf("Trying %s\n", name)
+		}
 
 		// search for file
 		ef := b.embed.Files[name]
 		if ef == nil {
+			if Debug {
+				fmt.Println("Didn't find file in embed")
+			}
 			// file not found, try dir
 			ed := b.embed.Dirs[name]
 			if ed == nil {
+				if Debug {
+					fmt.Println("Didn't find dir in embed")
+				}
 				// dir not found, error out
 				return nil, &os.PathError{
 					Op:   "open",
@@ -129,16 +145,25 @@ func (b *Box) Open(name string) (*File, error) {
 					Err:  os.ErrNotExist,
 				}
 			}
+			if Debug {
+				fmt.Println("Found dir. Returning virtual dir")
+			}
 			vd := newVirtualDir(ed)
 			return &File{virtualD: vd}, nil
 		}
 
 		// box is embedded
+		if Debug {
+			fmt.Println("Found file. Returning virtual file")
+		}
 		vf := newVirtualFile(ef)
 		return &File{virtualF: vf}, nil
 	}
 
 	// perform os open
+	if Debug {
+		fmt.Println("Using os.Open(%s)", filepath.Join(b.absolutePath, name))
+	}
 	file, err := os.Open(filepath.Join(b.absolutePath, name))
 	if err != nil {
 		return nil, err
