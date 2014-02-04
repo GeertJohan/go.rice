@@ -159,7 +159,7 @@ func (b *Box) Open(name string) (*File, error) {
 	if Debug {
 		fmt.Printf("Using os.Open(%s)", filepath.Join(b.absolutePath, name))
 	}
-	file, err := os.Open(filepath.Join(b.absolutePath, name))
+	file, err := os.Open(filepath.Join(b.absolutePath, name))F
 	if err != nil {
 		return nil, err
 	}
