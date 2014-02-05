@@ -1,5 +1,6 @@
 /example/example
 /rice/rice
+/rice/rice.exe
 
 *.rice-box.go
 *.rice-single.go
