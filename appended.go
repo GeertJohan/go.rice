@@ -3,7 +3,6 @@ package rice
 import (
 	"archive/zip"
 	"bitbucket.org/kardianos/osext"
-	"fmt"
 	"github.com/daaku/go.zipexe"
 	"os"
 	"path/filepath"
@@ -20,7 +19,8 @@ type appendedBox struct {
 type appendedFile struct {
 	zipFile  *zip.File
 	dir      bool
-	children []*appendedFile // only set when dir
+	dirInfo  *appendedDirInfo
+	children []*appendedFile
 }
 
 // appendedBoxes is a public register of appendes boxes
@@ -38,8 +38,6 @@ func init() {
 	}
 
 	for _, f := range rd.File {
-		fmt.Printf("Found appended file: %s\n", f.Name)
-
 		// get box and file name from f.Name
 		fileParts := strings.SplitN(strings.TrimLeft(f.Name, "/"), "/", 2)
 		boxName := fileParts[0]
@@ -51,7 +49,6 @@ func init() {
 		// find box or create new one if doesn't exist
 		box := appendedBoxes[boxName]
 		if box == nil {
-			fmt.Printf("Creating box %s\n", boxName)
 			box = &appendedBox{
 				Name:  boxName,
 				Files: make(map[string]*appendedFile),
@@ -65,6 +62,11 @@ func init() {
 		}
 		if f.Comment == "dir" {
 			af.dir = true
+			af.dirInfo = &appendedDirInfo{
+				name: filepath.Base(af.zipFile.Name),
+				//++ TODO: use zip modtime when that is set correctly
+				time: time.Now(),
+			}
 		}
 		box.Files[fileName] = af
 
@@ -74,7 +76,6 @@ func init() {
 			dirName = ""
 		}
 		if dir := box.Files[dirName]; dir != nil {
-			fmt.Printf("Adding child %s to parent %s\n", af.zipFile.Name, dir.zipFile.Name)
 			dir.children = append(dir.children, af)
 		}
 	}

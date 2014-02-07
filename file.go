@@ -5,7 +5,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"time"
 )
 
 // File abstracts file methods so the user doesn't see the difference between rice.virtualFile, rice.virtualDir and os.File
@@ -41,6 +40,9 @@ func (f *File) Close() error {
 // Visit http://golang.org/pkg/os/#File.Stat for more information
 func (f *File) Stat() (os.FileInfo, error) {
 	if f.appendedF != nil {
+		if f.appendedF.dir {
+			return f.appendedF.dirInfo, nil
+		}
 		return f.appendedF.zipFile.FileInfo(), nil
 	}
 	if f.virtualF != nil {
@@ -60,11 +62,7 @@ func (f *File) Readdir(count int) ([]os.FileInfo, error) {
 			fi := make([]os.FileInfo, len(f.appendedF.children))
 			for _, childAppendedFile := range f.appendedF.children {
 				if childAppendedFile.dir {
-					fi = append(fi, &appendedDirInfo{
-						name: filepath.Base(childAppendedFile.zipFile.Name),
-						//++ TODO: use zip modtime when that is set correctly
-						time: time.Now(),
-					})
+					fi = append(fi, f.appendedF.dirInfo)
 				} else {
 					fi = append(fi, childAppendedFile.zipFile.FileInfo())
 				}
