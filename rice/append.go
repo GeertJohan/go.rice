@@ -69,8 +69,16 @@ func operationAppend(pkg *build.Package) {
 		// walk box path's and insert files
 		boxPath := filepath.Join(pkg.Dir, boxname)
 		filepath.Walk(boxPath, func(path string, info os.FileInfo, err error) error {
-			// don't write directories with zip
+			// write directories as empty file with comment "dir"
 			if info.IsDir() {
+				_, err := zipWriter.CreateHeader(&zip.FileHeader{
+					Name:    strings.TrimPrefix(path, pkg.Dir),
+					Comment: "dir",
+				})
+				if err != nil {
+					fmt.Printf("Error creating dir in tmp zip: %s\n", err)
+					os.Exit(1)
+				}
 				return nil
 			}
 

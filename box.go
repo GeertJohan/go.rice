@@ -18,7 +18,7 @@ type Box struct {
 	name         string
 	absolutePath string
 	embed        *embedded.EmbeddedBox
-	appendd      *AppendedBox
+	appendd      *appendedBox
 }
 
 func findBox(name string) (*Box, error) {
@@ -33,7 +33,7 @@ func findBox(name string) (*Box, error) {
 	}
 
 	// find if box is appended
-	if appendd := AppendedBoxes[name]; appendd != nil {
+	if appendd := appendedBoxes[name]; appendd != nil {
 		b.appendd = appendd
 		return b, nil
 	}
@@ -177,7 +177,6 @@ func (b *Box) Open(name string) (*File, error) {
 		name = strings.TrimLeft(name, "/")
 
 		// search for file
-		//++ TODO: dir wont exists..... right?
 		appendedFile := b.appendd.Files[name]
 		if appendedFile == nil {
 			return nil, &os.PathError{
@@ -188,7 +187,7 @@ func (b *Box) Open(name string) (*File, error) {
 		}
 
 		// open io.ReadCloser
-		rc, err := appendedFile.Open()
+		rc, err := appendedFile.zipFile.Open()
 		if err != nil {
 			return nil, &os.PathError{
 				Op:   "open",
@@ -199,8 +198,8 @@ func (b *Box) Open(name string) (*File, error) {
 
 		// all done
 		return &File{
-			zipF:  appendedFile,
-			zipRC: rc,
+			appendedF:  appendedFile,
+			appendedRC: rc,
 		}, nil
 	}
 
@@ -237,7 +236,7 @@ func (b *Box) Bytes(name string) ([]byte, error) {
 		if af == nil {
 			return nil, os.ErrNotExist
 		}
-		rc, err := af.Open()
+		rc, err := af.zipFile.Open()
 		if err != nil {
 			return nil, err
 		}

@@ -180,9 +180,11 @@ func (vd *virtualDir) read(bts []byte) (int, error) {
 			Err:  errors.New("bad file descriptor"),
 		}
 	}
-	//++ TODO: what should happen on closed dir? return an error here?
-	// wont work for a dir (right?)
-	return 0, errors.New("doesnt work for dir (TODO: proper error such as os's error)")
+	return 0, &os.PathError{
+		Op:   "read",
+		Path: vd.EmbeddedDir.Filename,
+		Err:  errors.New("is a directory"),
+	}
 }
 
 func (vd *virtualDir) seek(offset int64, whence int) (int64, error) {

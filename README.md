@@ -80,7 +80,7 @@ This project is licensed under a Simplified BSD license. Please read the [LICENS
 
 ### TODO & Development
 This package is not completed yet. Though it already provides working embedding, some important featuers are still missing.
- - implement Readdir() correctly on virtualDir and zipFile
+ - implement Readdir() correctly on virtualDir
  - implement Seek() for zipFile
  - implement embedding with .a object files
 
@@ -89,6 +89,7 @@ Less important stuff:
  - think about MustString and MustBytes methods, which wraps String() and Bytes(), but panics on error and have single return value (string or []byte)
  - The rice tool uses a simple regexp to find calls to `rice.Box(..)`, this should be changed to `go/ast` or maybe `go.tools/oracle`?
  - idea, os/arch dependent embeds. rice checks if embedding file has _os_arch or build flags. If box is not requested by file without buildflags, then the buildflags are applied to the embed file.
+ - store meta information for appended (zip) files (mod time, etc)
 
 ### Package documentation
 

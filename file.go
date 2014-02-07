@@ -1,9 +1,11 @@
 package rice
 
 import (
-	"archive/zip"
+	"errors"
 	"io"
 	"os"
+	"path/filepath"
+	"time"
 )
 
 // File abstracts file methods so the user doesn't see the difference between rice.virtualFile, rice.virtualDir and os.File
@@ -16,15 +18,15 @@ type File struct {
 	virtualD *virtualDir
 
 	// when appended (zip)
-	zipF  *zip.File
-	zipRC io.ReadCloser
+	appendedF  *appendedFile
+	appendedRC io.ReadCloser
 }
 
 // Close is like (*os.File).Close()
 // Visit http://golang.org/pkg/os/#File.Close for more information
 func (f *File) Close() error {
-	if f.zipF != nil {
-		return f.zipRC.Close()
+	if f.appendedF != nil {
+		return f.appendedRC.Close()
 	}
 	if f.virtualF != nil {
 		return f.virtualF.close()
@@ -38,8 +40,8 @@ func (f *File) Close() error {
 // Stat is like (*os.File).Stat()
 // Visit http://golang.org/pkg/os/#File.Stat for more information
 func (f *File) Stat() (os.FileInfo, error) {
-	if f.zipF != nil {
-		return f.zipF.FileInfo(), nil
+	if f.appendedF != nil {
+		return f.appendedF.zipFile.FileInfo(), nil
 	}
 	if f.virtualF != nil {
 		return f.virtualF.stat()
@@ -53,8 +55,24 @@ func (f *File) Stat() (os.FileInfo, error) {
 // Readdir is like (*os.File).Readdir()
 // Visit http://golang.org/pkg/os/#File.Readdir for more information
 func (f *File) Readdir(count int) ([]os.FileInfo, error) {
-	if f.zipF != nil {
-		return nil, ErrNotImplemented
+	if f.appendedF != nil {
+		if f.appendedF.dir {
+			fi := make([]os.FileInfo, len(f.appendedF.children))
+			for _, childAppendedFile := range f.appendedF.children {
+				if childAppendedFile.dir {
+					fi = append(fi, &appendedDirInfo{
+						name: filepath.Base(childAppendedFile.zipFile.Name),
+						//++ TODO: use zip modtime when that is set correctly
+						time: time.Now(),
+					})
+				} else {
+					fi = append(fi, childAppendedFile.zipFile.FileInfo())
+				}
+			}
+			return fi, nil
+		}
+		//++ TODO: is os.ErrInvalid the correct error for Readdir on file?
+		return nil, os.ErrInvalid
 	}
 	if f.virtualF != nil {
 		return f.virtualF.readdir(count)
@@ -68,8 +86,15 @@ func (f *File) Readdir(count int) ([]os.FileInfo, error) {
 // Read is like (*os.File).Read()
 // Visit http://golang.org/pkg/os/#File.Read for more information
 func (f *File) Read(bts []byte) (int, error) {
-	if f.zipF != nil {
-		return f.zipRC.Read(bts)
+	if f.appendedF != nil {
+		if f.appendedF.dir {
+			return 0, &os.PathError{
+				Op:   "read",
+				Path: filepath.Base(f.appendedF.zipFile.Name),
+				Err:  errors.New("is a directory"),
+			}
+		}
+		return f.appendedRC.Read(bts)
 	}
 	if f.virtualF != nil {
 		return f.virtualF.read(bts)
@@ -83,7 +108,7 @@ func (f *File) Read(bts []byte) (int, error) {
 // Seek is like (*os.File).Seek()
 // Visit http://golang.org/pkg/os/#File.Seek for more information
 func (f *File) Seek(offset int64, whence int) (int64, error) {
-	if f.zipF != nil {
+	if f.appendedF != nil {
 		return 0, ErrNotImplemented
 	}
 	if f.virtualF != nil {
