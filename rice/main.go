@@ -8,16 +8,19 @@ import (
 )
 
 func main() {
-	//++ TODO: use less globals, more return values
+	// parser arguments
 	parseArguments()
 
+	// find package for path
+	pkg := pkgForPath(flags.ImportPath)
+
 	// switch on the operation to perform
-	switch operation {
+	switch flagsParser.Active.Name {
 	case "embed":
-		pkg := pkgForPath(path)
 		operationEmbed(pkg)
+	case "append":
+		operationAppend(pkg)
 	case "clean":
-		pkg := pkgForPath(path)
 		operationClean(pkg)
 	}
 

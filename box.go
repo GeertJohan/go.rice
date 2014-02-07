@@ -18,6 +18,7 @@ type Box struct {
 	name         string
 	absolutePath string
 	embed        *embedded.EmbeddedBox
+	appendd      *AppendedBox
 }
 
 func findBox(name string) (*Box, error) {
@@ -30,7 +31,12 @@ func findBox(name string) (*Box, error) {
 		b.embed = embed
 		return b, nil
 	}
-	// box was not embedded
+
+	// find if box is appended
+	if appendd := AppendedBoxes[name]; appendd != nil {
+		b.appendd = appendd
+		return b, nil
+	}
 
 	// when given name is an absolute path, set it as absolute path.
 	// otherwise calculate absolute path from caller source location
@@ -93,6 +99,11 @@ func (b *Box) IsEmbedded() bool {
 	return b.embed != nil
 }
 
+// IsAppended indicates wether this box was appended to the application
+func (b *Box) IsAppended() bool {
+	return b.appendd != nil
+}
+
 // Time returns how actual the box is.
 // When the box is embedded, it's value is saved in the embedding code.
 // When the box is live, this methods returns time.Now()
@@ -110,6 +121,12 @@ func (b *Box) Open(name string) (*File, error) {
 	if Debug {
 		fmt.Printf("Open(%s)\n", name)
 	}
+
+	// if b.IsAppended() {
+	// 	do stuff
+	// 	return ....
+	// }
+
 	if b.IsEmbedded() {
 		if Debug {
 			fmt.Println("Box is embedded")
@@ -155,6 +172,38 @@ func (b *Box) Open(name string) (*File, error) {
 		return &File{virtualF: vf}, nil
 	}
 
+	if b.IsAppended() {
+		// trim prefix (paths are relative to box)
+		name = strings.TrimLeft(name, "/")
+
+		// search for file
+		//++ TODO: dir wont exists..... right?
+		appendedFile := b.appendd.Files[name]
+		if appendedFile == nil {
+			return nil, &os.PathError{
+				Op:   "open",
+				Path: name,
+				Err:  os.ErrNotExist,
+			}
+		}
+
+		// open io.ReadCloser
+		rc, err := appendedFile.Open()
+		if err != nil {
+			return nil, &os.PathError{
+				Op:   "open",
+				Path: name,
+				Err:  os.ErrInvalid,
+			}
+		}
+
+		// all done
+		return &File{
+			zipF:  appendedFile,
+			zipRC: rc,
+		}, nil
+	}
+
 	// perform os open
 	if Debug {
 		fmt.Printf("Using os.Open(%s)", filepath.Join(b.absolutePath, name))
@@ -179,6 +228,24 @@ func (b *Box) Bytes(name string) ([]byte, error) {
 		cpy := make([]byte, 0, len(ef.Content))
 		cpy = append(cpy, ef.Content...)
 		// return copied bytes
+		return cpy, nil
+	}
+
+	// check if box is appended
+	if b.IsAppended() {
+		af := b.appendd.Files[name]
+		if af == nil {
+			return nil, os.ErrNotExist
+		}
+		rc, err := af.Open()
+		if err != nil {
+			return nil, err
+		}
+		cpy, err := ioutil.ReadAll(rc)
+		if err != nil {
+			return nil, err
+		}
+		rc.Close()
 		return cpy, nil
 	}
 
@@ -207,6 +274,15 @@ func (b *Box) String(name string) (string, error) {
 		}
 		// return as string
 		return ef.Content, nil
+	}
+
+	// check if box is apended
+	if b.IsAppended() {
+		bts, err := b.Bytes(name)
+		if err != nil {
+			return "", err
+		}
+		return string(bts), nil
 	}
 
 	// open actual file from disk

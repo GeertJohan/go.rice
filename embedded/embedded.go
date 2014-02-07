@@ -1,3 +1,5 @@
+// Package embedded defines embedded data types that are shared between the go.rice package and generated code.
+// This package is seperated from go.rice to make go.rice's documentation cleaner.
 package embedded
 
 import (
@@ -35,7 +37,7 @@ type EmbeddedFile struct {
 	Content     string
 }
 
-// EmbeddedBoxes is a public register of embedded boxe
+// EmbeddedBoxes is a public register of embedded boxes
 var EmbeddedBoxes = make(map[string]*EmbeddedBox)
 
 // RegisterEmbeddedBox registers an EmbeddedBox

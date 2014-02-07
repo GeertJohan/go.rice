@@ -1,11 +1,11 @@
 ## go.rice
 
-go.rice is a [Go](http://golang.org) package that makes working with resources such as html,js,css,images and templates very easy. During development `go.rice` will load required files directly from disk. Upon deployment it is easy to embed all dependent files using the `rice` tool, without changing the source code for your package.
+go.rice is a [Go](http://golang.org) package that makes working with resources such as html,js,css,images and templates very easy. During development `go.rice` will load required files directly from disk. Upon deployment it is easy to add all resource files to a executable using the `rice` tool, without changing the source code for your package.
 
 ### What does it do?
 The first thing go.rice does is finding the correct absolute path for your resource files. Say you are executing go binary in your home directory, but your html files are located in `$GOPATH/src/webApplication/html-files`. `go.rice` will lookup the aboslute path for that directory. The only thing you have to do is include the resources using `rice.FindBox("html-files")`.
 
-This only works when the source is available to the machine executing the binary. This is always the case when the binary was installed with `go get` or `go install`. It might happen that you wish to simply provide a binary, without source. For instance in server deployment. The `rice` tool analyses source code and finds call's to `rice.FindBox(..)` and embeds the required directories an "embeddex box". For each box a `.go` source file is generated containing the resources inside the box.
+This only works when the source is available to the machine executing the binary. This is always the case when the binary was installed with `go get` or `go install`. It might happen that you wish to simply provide a binary, without source. The `rice` tool analyses source code and finds call's to `rice.FindBox(..)` and adds the required directories to the executable binary. There are several ways to add these resources. You can 'embed' by generating go source code, or append the resource to the executable.
 
 ### Installation
 
@@ -15,7 +15,7 @@ go get github.com/GeertJohan/go.rice
 go install github.com/GeertJohan/go.rice/rice
 ```
 
-### Usage & Examples
+### Package usage
 
 Import the package: `import "github.com/GeertJohan/go.rice"`
 
@@ -46,20 +46,49 @@ tmplMessage.Execute(os.Stdout, map[string]string{"Message": "Hello, world!"})
 
 ```
 
-### Licence
+### Tool usage
+The `rice` tool lets you add the resources to a binary executable so the files are not loaded from the filesystem anymore. This creates a 'standalone' executable. There's several ways to add the resources to a binary, each has pro's and con's but all will work without changing your source code. `go.rice` will figure it all out for you.
 
+** Embed in Go source **
+
+Run `rice embed` to generate Go source that contains all required resources. Afterwards run `go build` to create a standalone executable.
+
+** Append resources **
+
+Run the following commands to create a standalone executable.
+```
+go build -o example
+rice append --exec example
+```
+
+#### Help information
+Run `rice -h` for information about all options.
+You can run the -h option for each sub-command, e.g. `rice append -h`.
+
+### Order of preference
+When opening a new box, the rice pkg tries to locate it using the following order:
+
+ - embedded in generated go source
+ - embedded with .a object files (not available yet)
+ - appended as zip
+ - 'live' from filesystem
+
+
+### Licence
 This project is licensed under a Simplified BSD license. Please read the [LICENSE file][license].
 
 
 ### TODO & Development
 This package is not completed yet. Though it already provides working embedding, some important featuers are still missing.
- - implement Readdir() correctly on virtualDir
+ - implement Readdir() correctly on virtualDir and zipFile
+ - implement Seek() for zipFile
+ - implement embedding with .a object files
 
 Less important stuff:
  - rice.FindSingle(..) that loads and embeds a single file as oposed to a complete directory. It should have methods .String(), .Bytes() and .File()
  - think about MustString and MustBytes methods, which wraps String() and Bytes(), but panics on error and have single return value (string or []byte)
  - The rice tool uses a simple regexp to find calls to `rice.Box(..)`, this should be changed to `go/ast` or maybe `go.tools/oracle`?
- - idea, os/arch dependent embeds. rice checks if embedding file has _os_arch or build flags. If box is not requested by file without build-flags, then the buildflags are applied to the embed file.
+ - idea, os/arch dependent embeds. rice checks if embedding file has _os_arch or build flags. If box is not requested by file without buildflags, then the buildflags are applied to the embed file.
 
 ### Package documentation
 

@@ -1,20 +1,31 @@
 package rice
 
 import (
+	"archive/zip"
+	"io"
 	"os"
 )
 
 // File abstracts file methods so the user doesn't see the difference between rice.virtualFile, rice.virtualDir and os.File
 // This type implements the io.Reader, io.Seeker, io.Closer and http.File interfaces
 type File struct {
-	realF    *os.File
+	realF *os.File
+
+	// when embedded (go)
 	virtualF *virtualFile
 	virtualD *virtualDir
+
+	// when appended (zip)
+	zipF  *zip.File
+	zipRC io.ReadCloser
 }
 
 // Close is like (*os.File).Close()
 // Visit http://golang.org/pkg/os/#File.Close for more information
 func (f *File) Close() error {
+	if f.zipF != nil {
+		return f.zipRC.Close()
+	}
 	if f.virtualF != nil {
 		return f.virtualF.close()
 	}
@@ -27,6 +38,9 @@ func (f *File) Close() error {
 // Stat is like (*os.File).Stat()
 // Visit http://golang.org/pkg/os/#File.Stat for more information
 func (f *File) Stat() (os.FileInfo, error) {
+	if f.zipF != nil {
+		return f.zipF.FileInfo(), nil
+	}
 	if f.virtualF != nil {
 		return f.virtualF.stat()
 	}
@@ -39,6 +53,9 @@ func (f *File) Stat() (os.FileInfo, error) {
 // Readdir is like (*os.File).Readdir()
 // Visit http://golang.org/pkg/os/#File.Readdir for more information
 func (f *File) Readdir(count int) ([]os.FileInfo, error) {
+	if f.zipF != nil {
+		return nil, ErrNotImplemented
+	}
 	if f.virtualF != nil {
 		return f.virtualF.readdir(count)
 	}
@@ -51,6 +68,9 @@ func (f *File) Readdir(count int) ([]os.FileInfo, error) {
 // Read is like (*os.File).Read()
 // Visit http://golang.org/pkg/os/#File.Read for more information
 func (f *File) Read(bts []byte) (int, error) {
+	if f.zipF != nil {
+		return f.zipRC.Read(bts)
+	}
 	if f.virtualF != nil {
 		return f.virtualF.read(bts)
 	}
@@ -63,6 +83,9 @@ func (f *File) Read(bts []byte) (int, error) {
 // Seek is like (*os.File).Seek()
 // Visit http://golang.org/pkg/os/#File.Seek for more information
 func (f *File) Seek(offset int64, whence int) (int64, error) {
+	if f.zipF != nil {
+		return 0, ErrNotImplemented
+	}
 	if f.virtualF != nil {
 		return f.virtualF.seek(offset, whence)
 	}
