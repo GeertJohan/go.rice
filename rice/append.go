@@ -15,11 +15,13 @@ import (
 
 func operationAppend(pkg *build.Package) {
 
-	// check if package is a command
-	if !pkg.IsCommand() {
-		fmt.Println("Error: can not append to non-main package. Please follow instructions at github.com/GeertJohan/go.rice")
-		os.Exit(1)
-	}
+	// MARKED FOR DELETION
+	// This is actually not required, the append command now has the option --exec required.
+	// // check if package is a command
+	// if !pkg.IsCommand() {
+	// 	fmt.Println("Error: can not append to non-main package. Please follow instructions at github.com/GeertJohan/go.rice")
+	// 	os.Exit(1)
+	// }
 
 	// find boxes for this command
 	boxMap := findBoxes(pkg)
