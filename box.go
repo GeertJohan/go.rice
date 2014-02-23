@@ -253,6 +253,7 @@ func (b *Box) Bytes(name string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer file.Close()
 	// read complete content
 	bts, err := ioutil.ReadAll(file)
 	if err != nil {
@@ -289,6 +290,7 @@ func (b *Box) String(name string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	defer file.Close()
 	// read complete content
 	bts, err := ioutil.ReadAll(file)
 	if err != nil {
