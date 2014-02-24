@@ -98,3 +98,4 @@ You will find package documentation at [godoc.org/github.com/GeertJohan/go.rice]
 
  [license]: https://github.com/GeertJohan/go.rice/blob/master/LICENSE
  [godoc]: http://godoc.org/github.com/GeertJohan/go.rice
+ 
