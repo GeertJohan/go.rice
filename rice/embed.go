@@ -52,6 +52,7 @@ func operationEmbed(pkg *build.Package) {
 				os.Exit(1)
 			}
 
+			path = strings.Replace(path, "\\", "/", -1)
 			if info.IsDir() {
 				dirData := &dirDataType{
 					Identifier: "dir_" + nextIdentifier(),
