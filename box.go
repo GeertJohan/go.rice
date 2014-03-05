@@ -214,7 +214,7 @@ func (b *Box) Open(name string) (*File, error) {
 	return &File{realF: file}, nil
 }
 
-// Bytes returns the content of the file with given name as []byte
+// Bytes returns the content of the file with given name as []byte.
 func (b *Box) Bytes(name string) ([]byte, error) {
 	// check if box is embedded
 	if b.IsEmbedded() {
@@ -263,7 +263,17 @@ func (b *Box) Bytes(name string) ([]byte, error) {
 	return bts, nil
 }
 
-// String returns the content of the file with given name as string
+// MustBytes returns the content of the file with given name as []byte.
+// panic's on error.
+func (b *Box) MustBytes(name string) []byte {
+	bts, err := b.Bytes(name)
+	if err != nil {
+		panic(err)
+	}
+	return bts
+}
+
+// String returns the content of the file with given name as string.
 func (b *Box) String(name string) (string, error) {
 	// check if box is embedded
 	if b.IsEmbedded() {
@@ -298,4 +308,14 @@ func (b *Box) String(name string) (string, error) {
 	}
 	// return result as string
 	return string(bts), nil
+}
+
+// MustString returns the content of the file with given name as string.
+// panic's on error.
+func (b *Box) MustString(name string) string {
+	str, err := b.String(name)
+	if err != nil {
+		panic(err)
+	}
+	return str
 }
