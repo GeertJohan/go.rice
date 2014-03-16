@@ -26,6 +26,8 @@ func operationAppend(pkg *build.Package) {
 	// find boxes for this command
 	boxMap := findBoxes(pkg)
 
+	fmt.Printf("pkg.Dir: %s\n", pkg.Dir)
+
 	// notify user when no calls to rice.FindBox are made (is this an error and therefore os.Exit(1) ?
 	if len(boxMap) == 0 {
 		fmt.Println("no calls to rice.FindBox() found")
@@ -42,13 +44,12 @@ func operationAppend(pkg *build.Package) {
 		os.Exit(1)
 	}
 
-	// find path for binary file
-	pwd, err := os.Getwd()
+	// find abs path for binary file
+	binfileName, err := filepath.Abs(flags.Append.Executable)
 	if err != nil {
-		fmt.Printf("error getting pwd: %s\n", err)
+		fmt.Printf("Error finding absolute path for executable to append: %s\n", err)
 		os.Exit(1)
 	}
-	binfileName := filepath.Join(pwd, flags.Append.Executable)
 	verbosef("Will append to file: %s\n", binfileName)
 
 	// check that command doesn't already have zip appended
@@ -68,13 +69,18 @@ func operationAppend(pkg *build.Package) {
 	zipWriter := zip.NewWriter(tmpZipfile)
 
 	for boxname := range boxMap {
+		appendedBoxName := strings.Replace(boxname, `/`, `-`, -1)
+
 		// walk box path's and insert files
-		boxPath := filepath.Join(pkg.Dir, boxname)
+		boxPath := filepath.Clean(filepath.Join(pkg.Dir, boxname))
 		filepath.Walk(boxPath, func(path string, info os.FileInfo, err error) error {
+			// create zipFilename
+			zipFileName := filepath.Join(appendedBoxName, strings.TrimPrefix(path, boxPath))
+
 			// write directories as empty file with comment "dir"
 			if info.IsDir() {
 				_, err := zipWriter.CreateHeader(&zip.FileHeader{
-					Name:    strings.TrimPrefix(path, pkg.Dir),
+					Name:    zipFileName,
 					Comment: "dir",
 				})
 				if err != nil {
@@ -85,7 +91,7 @@ func operationAppend(pkg *build.Package) {
 			}
 
 			// create zipFileWriter
-			zipFileWriter, err := zipWriter.Create(strings.TrimPrefix(path, pkg.Dir))
+			zipFileWriter, err := zipWriter.Create(zipFileName)
 			if err != nil {
 				fmt.Printf("Error creating file in tmp zip: %s\n", err)
 				os.Exit(1)
