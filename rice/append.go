@@ -9,11 +9,16 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 )
 
 func operationAppend(pkg *build.Package) {
+	if runtime.GOOS == "windows" {
+		fmt.Println("#### WARNING ! ####")
+		fmt.Println("`rice append` is known not to work under windows because the `zip` command is not available. Please let me know if you got this to work (and how).")
+	}
 
 	// MARKED FOR DELETION
 	// This is actually not required, the append command now has the option --exec required.
