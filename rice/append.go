@@ -34,6 +34,7 @@ func operationAppend(pkg *build.Package) {
 	// notify user when no calls to rice.FindBox are made (is this an error and therefore os.Exit(1) ?
 	if len(boxMap) == 0 {
 		fmt.Println("no calls to rice.FindBox() found")
+		return
 	}
 
 	verbosef("\n")
