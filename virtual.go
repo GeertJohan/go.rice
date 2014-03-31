@@ -195,7 +195,6 @@ func (vd *virtualDir) seek(offset int64, whence int) (int64, error) {
 			Err:  errors.New("bad file descriptor"),
 		}
 	}
-	//++ TODO: what should happen on closed dir? return an error here?
 	return 0, &os.PathError{
 		Op:   "seek",
 		Path: vd.Filename,
