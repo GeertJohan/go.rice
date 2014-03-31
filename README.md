@@ -83,6 +83,7 @@ This package is not completed yet. Though it already provides working embedding,
  - implement Readdir() correctly on virtualDir
  - implement Seek() for zipFile
  - implement embedding with .a object files
+ - automated testing with TravisCI or Drone **important**
 
 Less important stuff:
  - rice.FindSingle(..) that loads and embeds a single file as oposed to a complete directory. It should have methods .String(), .Bytes() and .File()
