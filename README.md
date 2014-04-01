@@ -49,11 +49,19 @@ tmplMessage.Execute(os.Stdout, map[string]string{"Message": "Hello, world!"})
 ### Tool usage
 The `rice` tool lets you add the resources to a binary executable so the files are not loaded from the filesystem anymore. This creates a 'standalone' executable. There's several ways to add the resources to a binary, each has pro's and con's but all will work without changing your source code. `go.rice` will figure it all out for you.
 
-**Embed in Go source**
+**Embed resources in Go source**
+
+This option is pre-build, it generates Go source files that are compiled into the binary.
 
 Run `rice embed` to generate Go source that contains all required resources. Afterwards run `go build` to create a standalone executable.
 
-**Append resources**
+**Append resources to executable**
+
+_Does not work on windows (yet)_
+
+This options is post-build, it appends the resources to the binary. It makes compilation a lot faster and can be used with large resource files.
+
+Appending requires `zip` to be installed.
 
 Run the following commands to create a standalone executable.
 ```
