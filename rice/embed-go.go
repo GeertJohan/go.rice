@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-func operationEmbed(pkg *build.Package) {
+func operationEmbedGo(pkg *build.Package) {
 
 	boxMap := findBoxes(pkg)
 

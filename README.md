@@ -93,7 +93,6 @@ When opening a new box, the rice package tries to locate the resources in the fo
 ### Licence
 This project is licensed under a Simplified BSD license. Please read the [LICENSE file][license].
 
-
 ### TODO & Development
 This package is not completed yet. Though it already provides working embedding, some important featuers are still missing.
  - implement Readdir() correctly on virtualDir

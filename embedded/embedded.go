@@ -6,12 +6,18 @@ import (
 	"time"
 )
 
+const (
+	EmbedTypeGo   = 0
+	EmbedTypeSyso = 1
+)
+
 // EmbeddedBox defines an embedded box
 type EmbeddedBox struct {
-	Name  string                   // box name
-	Time  time.Time                // embed time
-	Files map[string]*EmbeddedFile // ALL embedded files by full path
-	Dirs  map[string]*EmbeddedDir  // ALL embedded dirs by full path
+	Name      string                   // box name
+	Time      time.Time                // embed time
+	EmbedType int                      // kind of embedding
+	Files     map[string]*EmbeddedFile // ALL embedded files by full path
+	Dirs      map[string]*EmbeddedDir  // ALL embedded dirs by full path
 }
 
 // EmbeddedSingle defines an embedded single
