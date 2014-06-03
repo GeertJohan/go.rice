@@ -1,5 +1,4 @@
 // Package embedded defines embedded data types that are shared between the go.rice package and generated code.
-// This package is seperated from go.rice to make go.rice's documentation cleaner.
 package embedded
 
 import (
