@@ -29,7 +29,7 @@ func findBox(name string) (*Box, error) {
 	// no support for absolute paths since gopath can be different on different machines.
 	// therefore, required box must be located relative to package requiring it.
 	if filepath.IsAbs(name) {
-		return nil, errors.New("given name/path is aboslute")
+		return nil, errors.New("given name/path is absolute")
 	}
 
 	// find if box is embedded
