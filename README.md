@@ -49,7 +49,7 @@ tmplMessage.Execute(os.Stdout, map[string]string{"Message": "Hello, world!"})
 ### Tool usage
 The `rice` tool lets you add the resources to a binary executable so the files are not loaded from the filesystem anymore. This creates a 'standalone' executable. There are several ways to add the resources to a binary, each has pro's and con's but all will work without requiring changes to the way you load the resources.
 
-#### embed
+#### embed-go
 **Embed resources by generating Go source code**
 
 This method must be executed before building. It generates Go source files that are compiled by the go compiler into the binary.
@@ -58,11 +58,22 @@ The downside with this option is that the generated go source files can become v
 
 Execute the following commands:
 ```
-rice embed
+rice embed-go
 go build
 ```
 
-### append
+#### embed-syso
+**Embed resources by generating a coff .syso file and some .go source code**
+
+This method must be executed before building. It generates a COFF .syso file and Go source file that are compiled by the go compiler into the binary.
+
+Execute the following commands:
+```
+rice embed-syso
+go build
+```
+
+#### append
 **Append resources to executable as zip file**
 
 _Does not work on windows (yet)_
