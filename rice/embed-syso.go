@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"text/template"
 	"time"
 )
 
@@ -20,6 +21,51 @@ type sizedBytes []byte
 
 func (s sizedBytes) Size() int64 {
 	return int64(len(s))
+}
+
+var tmplEmbeddedSysoHelper *template.Template
+
+func init() {
+	var err error
+	tmplEmbeddedSysoHelper, err = template.New("embeddedSysoHelper").Parse(`package {{.Package}}
+
+// extern char _bricebox_{{.Symname}}[], _ericebox_{{.Symname}};
+// int get_{{.Symname}}_length() {
+// 	return &_ericebox_{{.Symname}} - _bricebox_{{.Symname}};
+// }
+import "C"
+import (
+	"bytes"
+	"encoding/gob"
+	"github.com/GeertJohan/go.rice/embedded"
+	"unsafe"
+)
+
+// func get_{{.Symname}}() []byte {
+// 	ptr := unsafe.Pointer(&C._bricebox_{{.Symname}})
+// 	bts := C.GoBytes(ptr, C.get_{{.Symname}}_length())
+// 	return bts
+// }
+
+func init() {
+	ptr := unsafe.Pointer(&C._bricebox_{{.Symname}})
+	bts := C.GoBytes(ptr, C.get_{{.Symname}}_length())
+	embeddedBox := &embedded.EmbeddedBox{}
+	err := gob.NewDecoder(bytes.NewReader(bts)).Decode(embeddedBox)
+	if err != nil {
+		panic("error decoding embedded box: "+err.Error())
+	}
+	embeddedBox.Link()
+	embedded.RegisterEmbeddedBox(embeddedBox.Name, embeddedBox)
+}`)
+	if err != nil {
+		panic("could not parse template embeddedSysoHelper: " + err.Error())
+	}
+}
+
+type embeddedSysoHelperData struct {
+	Package string
+	Symname string
 }
 
 func operationEmbedSyso(pkg *build.Package) {
@@ -41,7 +87,6 @@ func operationEmbedSyso(pkg *build.Package) {
 		boxPath := filepath.Join(pkg.Dir, boxname)
 		boxFilename := strings.Replace(boxname, "/", "-", -1)
 		boxFilename = strings.Replace(boxFilename, "..", "back", -1)
-		boxFilename = boxFilename + `.rice-box` // append with .go and .syso
 
 		// verbose info
 		verbosef("embedding box '%s'\n", boxname)
@@ -108,14 +153,42 @@ func operationEmbedSyso(pkg *build.Package) {
 
 		// write coff
 		symname := regexpSynameReplacer.ReplaceAllString(boxname, "_")
-		boxCoff := coff.NewRDATA()
-		boxCoff.AddData("_bricebox_"+symname, sizedBytes(boxGobBuf.Bytes()))
-		boxCoff.AddData("_ericebox_"+symname, io.NewSectionReader(strings.NewReader("\000\000"), 0, 2)) // TODO: why? copied from as-generated
-		boxCoff.Freeze()
-		err = writeCoff(boxCoff, boxFilename+"_386.syso")
+		createCoffSyso(boxname, symname, "386", boxGobBuf.Bytes())
+		createCoffSyso(boxname, symname, "amd64", boxGobBuf.Bytes())
+
+		// write go
+		sysoHelperData := embeddedSysoHelperData{
+			Package: pkg.Name,
+			Symname: symname,
+		}
+		fileSysoHelper, err := os.Create(boxFilename + ".rice-box.go")
 		if err != nil {
-			fmt.Printf("error writing coff/.syso: %v\n", err)
+			fmt.Printf("error creating syso helper: %v\n", err)
 			os.Exit(1)
 		}
+		err = tmplEmbeddedSysoHelper.Execute(fileSysoHelper, sysoHelperData)
+		if err != nil {
+			fmt.Printf("error executing tmplEmbeddedSysoHelper: %v\n", err)
+			os.Exit(1)
+		}
+	}
+}
+
+func createCoffSyso(boxFilename string, symname string, arch string, data []byte) {
+	boxCoff := coff.NewRDATA()
+	switch arch {
+	case "386":
+	case "amd64":
+		boxCoff.FileHeader.Machine = 0x8664
+	default:
+		panic("invalid arch")
+	}
+	boxCoff.AddData("_bricebox_"+symname, sizedBytes(data))
+	boxCoff.AddData("_ericebox_"+symname, io.NewSectionReader(strings.NewReader("\000\000"), 0, 2)) // TODO: why? copied from rsrc, which copied it from as-generated
+	boxCoff.Freeze()
+	err := writeCoff(boxCoff, boxFilename+"_"+arch+".rice-box.syso")
+	if err != nil {
+		fmt.Printf("error writing %s coff/.syso: %v\n", arch, err)
+		os.Exit(1)
 	}
 }

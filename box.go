@@ -26,6 +26,11 @@ func findBox(name string) (*Box, error) {
 		name: name,
 	}
 
+	// don't allow dots in box name (they will mess with .syso object file names' arch tags)
+	if strings.Contains(name, ".") {
+		return nil, errors.New("box name contains illegal dot (.) character")
+	}
+
 	// no support for absolute paths since gopath can be different on different machines.
 	// therefore, required box must be located relative to package requiring it.
 	if filepath.IsAbs(name) {
