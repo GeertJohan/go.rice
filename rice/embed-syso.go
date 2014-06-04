@@ -41,12 +41,6 @@ import (
 	"unsafe"
 )
 
-// func get_{{.Symname}}() []byte {
-// 	ptr := unsafe.Pointer(&C._bricebox_{{.Symname}})
-// 	bts := C.GoBytes(ptr, C.get_{{.Symname}}_length())
-// 	return bts
-// }
-
 func init() {
 	ptr := unsafe.Pointer(&C._bricebox_{{.Symname}})
 	bts := C.GoBytes(ptr, C.get_{{.Symname}}_length())
