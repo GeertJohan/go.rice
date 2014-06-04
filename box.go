@@ -123,11 +123,6 @@ func (b *Box) Open(name string) (*File, error) {
 		fmt.Printf("Open(%s)\n", name)
 	}
 
-	// if b.IsAppended() {
-	// 	do stuff
-	// 	return ....
-	// }
-
 	if b.IsEmbedded() {
 		if Debug {
 			fmt.Println("Box is embedded")
