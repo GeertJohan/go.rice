@@ -49,7 +49,7 @@ tmplMessage.Execute(os.Stdout, map[string]string{"Message": "Hello, world!"})
 ### Tool usage
 The `rice` tool lets you add the resources to a binary executable so the files are not loaded from the filesystem anymore. This creates a 'standalone' executable. There are several ways to add the resources to a binary, each has pro's and con's but all will work without requiring changes to the way you load the resources.
 
-#### embed
+#### embed-go
 **Embed resources by generating Go source code**
 
 This method must be executed before building. It generates Go source files that are compiled by the go compiler into the binary.
@@ -58,11 +58,24 @@ The downside with this option is that the generated go source files can become v
 
 Execute the following commands:
 ```
-rice embed
+rice embed-go
 go build
 ```
 
-### append
+#### embed-syso
+**Embed resources by generating a coff .syso file and some .go source code**
+
+** This method is experimental and should not be used for production systems just yet **
+
+This method must be executed before building. It generates a COFF .syso file and Go source file that are compiled by the go compiler into the binary.
+
+Execute the following commands:
+```
+rice embed-syso
+go build
+```
+
+#### append
 **Append resources to executable as zip file**
 
 _Does not work on windows (yet)_
@@ -93,7 +106,6 @@ When opening a new box, the rice package tries to locate the resources in the fo
 ### Licence
 This project is licensed under a Simplified BSD license. Please read the [LICENSE file][license].
 
-
 ### TODO & Development
 This package is not completed yet. Though it already provides working embedding, some important featuers are still missing.
  - implement Readdir() correctly on virtualDir
@@ -102,7 +114,6 @@ This package is not completed yet. Though it already provides working embedding,
  - find boxes in imported packages
 
 Less important stuff:
- - rice.FindSingle(..) that loads and embeds a single file as oposed to a complete directory. It should have methods .String(), .Bytes() and .File()
  - The rice tool uses a simple regexp to find calls to `rice.FindBox(..)`, this should be changed to `go/ast` or maybe `go.tools/oracle`?
  - idea, os/arch dependent embeds. rice checks if embedding file has _os_arch or build flags. If box is not requested by file without buildflags, then the buildflags are applied to the embed file.
 
