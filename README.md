@@ -65,6 +65,8 @@ go build
 #### embed-syso
 **Embed resources by generating a coff .syso file and some .go source code**
 
+** This method is experimental and should not be used for production systems just yet **
+
 This method must be executed before building. It generates a COFF .syso file and Go source file that are compiled by the go compiler into the binary.
 
 Execute the following commands:
