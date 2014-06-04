@@ -17,10 +17,12 @@ import (
 	"time"
 )
 
-type sizedBytes []byte
+type sizedReader struct {
+	*bytes.Reader
+}
 
-func (s sizedBytes) Size() int64 {
-	return int64(len(s))
+func (s sizedReader) Size() int64 {
+	return int64(s.Len())
 }
 
 var tmplEmbeddedSysoHelper *template.Template
@@ -149,6 +151,8 @@ func operationEmbedSyso(pkg *build.Package) {
 			os.Exit(1)
 		}
 
+		verbosef("gob-encoded embeddedBox is %d bytes large\n", boxGobBuf.Len())
+
 		// write coff
 		symname := regexpSynameReplacer.ReplaceAllString(boxname, "_")
 		createCoffSyso(boxname, symname, "386", boxGobBuf.Bytes())
@@ -181,7 +185,7 @@ func createCoffSyso(boxFilename string, symname string, arch string, data []byte
 	default:
 		panic("invalid arch")
 	}
-	boxCoff.AddData("_bricebox_"+symname, sizedBytes(data))
+	boxCoff.AddData("_bricebox_"+symname, sizedReader{bytes.NewReader(data)})
 	boxCoff.AddData("_ericebox_"+symname, io.NewSectionReader(strings.NewReader("\000\000"), 0, 2)) // TODO: why? copied from rsrc, which copied it from as-generated
 	boxCoff.Freeze()
 	err := writeCoff(boxCoff, boxFilename+"_"+arch+".rice-box.syso")
