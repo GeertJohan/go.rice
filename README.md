@@ -46,6 +46,8 @@ tmplMessage.Execute(os.Stdout, map[string]string{"Message": "Hello, world!"})
 
 ```
 
+Never call `FindBox()` or `MustFindBox()` from an `init()` function, as the boxes might have not been loaded at that time.
+
 ### Tool usage
 The `rice` tool lets you add the resources to a binary executable so the files are not loaded from the filesystem anymore. This creates a 'standalone' executable. There are several ways to add the resources to a binary, each has pro's and con's but all will work without requiring changes to the way you load the resources.
 
