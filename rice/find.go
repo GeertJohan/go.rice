@@ -39,8 +39,12 @@ func findBoxes(pkg *build.Package) map[string]bool {
 		}
 
 		var riceIsImported bool
+		ricePkgName := "rice"
 		for _, imp := range f.Imports {
-			if imp.Path.Value == "\"github.com/GeertJohan/go.rice\"" {
+			if strings.HasSuffix(imp.Path.Value, "go.rice\"") {
+				if imp.Name != nil {
+					ricePkgName = imp.Name.Name
+				}
 				riceIsImported = true
 				break
 			}
@@ -49,10 +53,15 @@ func findBoxes(pkg *build.Package) map[string]bool {
 			// Rice wasn't imported, so we won't find a box.
 			continue
 		}
+		if ricePkgName == "_" {
+			// Rice pkg is unnamed, so we won't find a box.
+			continue
+		}
 
 		// Inspect AST, looking for calls to (Must)?FindBox.
 		// First parameter of the func must be a basic literal.
 		// Identifiers won't be resolved.
+		var nextIdentIsBoxFunc bool
 		var nextBasicLitParamIsBoxName bool
 		ast.Inspect(f, func(node ast.Node) bool {
 			if node == nil {
@@ -60,11 +69,15 @@ func findBoxes(pkg *build.Package) map[string]bool {
 			}
 			switch x := node.(type) {
 			case *ast.Ident:
-				if nextBasicLitParamIsBoxName {
-					nextBasicLitParamIsBoxName = false
-				}
-				if x.Name == "FindBox" || x.Name == "MustFindBox" {
-					nextBasicLitParamIsBoxName = true
+				if nextIdentIsBoxFunc || ricePkgName == "." {
+					nextIdentIsBoxFunc = false
+					if x.Name == "FindBox" || x.Name == "MustFindBox" {
+						nextBasicLitParamIsBoxName = true
+					}
+				} else {
+					if x.Name == ricePkgName {
+						nextIdentIsBoxFunc = true
+					}
 				}
 			case *ast.BasicLit:
 				if nextBasicLitParamIsBoxName && x.Kind == token.STRING {
@@ -76,6 +89,9 @@ func findBoxes(pkg *build.Package) map[string]bool {
 				}
 
 			default:
+				if nextIdentIsBoxFunc {
+					nextIdentIsBoxFunc = false
+				}
 				if nextBasicLitParamIsBoxName {
 					nextBasicLitParamIsBoxName = false
 				}
