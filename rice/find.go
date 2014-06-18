@@ -8,6 +8,7 @@ import (
 	"go/token"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 func findBoxes(pkg *build.Package) map[string]bool {
@@ -23,7 +24,12 @@ func findBoxes(pkg *build.Package) map[string]bool {
 	for _, filename := range filenames {
 		// find full filepath
 		fullpath := filepath.Join(pkg.Dir, filename)
-		verbosef("scanning file %s\n", fullpath)
+		if strings.HasSuffix(filename, "rice-box.go") {
+			// Ignore *.rice-box.go files
+			verbosef("skipping file %q\n", fullpath)
+			continue
+		}
+		verbosef("scanning file %q\n", fullpath)
 
 		fset := token.NewFileSet()
 		f, err := parser.ParseFile(fset, fullpath, nil, 0)
