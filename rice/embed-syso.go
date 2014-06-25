@@ -87,6 +87,7 @@ func operationEmbedSyso(pkg *build.Package) {
 		boxPath := filepath.Join(pkg.Dir, boxname)
 		boxFilename := strings.Replace(boxname, "/", "-", -1)
 		boxFilename = strings.Replace(boxFilename, "..", "back", -1)
+		boxFilename = strings.Replace(boxFilename, ".", "-", -1)
 
 		// verbose info
 		verbosef("embedding box '%s'\n", boxname)
