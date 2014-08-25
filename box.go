@@ -134,6 +134,8 @@ func (b *Box) Time() time.Time {
 		return b.embed.Time
 	}
 
+	//++ TODO: return time for appended box
+
 	return time.Now()
 }
 
