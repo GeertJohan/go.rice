@@ -21,10 +21,10 @@ type Box struct {
 	appendd      *appendedBox
 }
 
-func findBox(name string) (*Box, error) {
-	b := &Box{
-		name: name,
-	}
+var defaultLocateOrder = []LocateMethod{LocateEmbedded, LocateAppended, LocateFS}
+
+func findBox(name string, order []LocateMethod) (*Box, error) {
+	b := &Box{name: name}
 
 	// no support for absolute paths since gopath can be different on different machines.
 	// therefore, required box must be located relative to package requiring it.
@@ -32,37 +32,47 @@ func findBox(name string) (*Box, error) {
 		return nil, errors.New("given name/path is absolute")
 	}
 
-	// find if box is embedded
-	if embed := embedded.EmbeddedBoxes[name]; embed != nil {
-		b.embed = embed
-		return b, nil
+	var err error
+	for _, method := range order {
+		switch method {
+		case LocateEmbedded:
+			if embed := embedded.EmbeddedBoxes[name]; embed != nil {
+				b.embed = embed
+				return b, nil
+			}
+
+		case LocateAppended:
+			appendedBoxName := strings.Replace(name, `/`, `-`, -1)
+			if appendd := appendedBoxes[appendedBoxName]; appendd != nil {
+				b.appendd = appendd
+				return b, nil
+			}
+
+		case LocateFS:
+			// resolve absolute directory path
+			err := b.resolveAbsolutePathFromCaller()
+			if err != nil {
+				continue
+			}
+			// check if absolutePath exists on filesystem
+			info, err := os.Stat(b.absolutePath)
+			if err != nil {
+				continue
+			}
+			// check if absolutePath is actually a directory
+			if !info.IsDir() {
+				err = errors.New("given name/path is not a directory")
+				continue
+			}
+			return b, nil
+		}
 	}
 
-	// find if box is appended
-	appendedBoxName := strings.Replace(name, `/`, `-`, -1)
-	if appendd := appendedBoxes[appendedBoxName]; appendd != nil {
-		b.appendd = appendd
-		return b, nil
+	if err == nil {
+		err = fmt.Errorf("could not locate box %q", name)
 	}
 
-	// resolve absolute directory path
-	err := b.resolveAbsolutePathFromCaller()
-	if err != nil {
-		return nil, err
-	}
-
-	// check if absolutePath exists on filesystem
-	info, err := os.Stat(b.absolutePath)
-	if err != nil {
-		return nil, err
-	}
-	// check if absolutePath is actually a directory
-	if !info.IsDir() {
-		return nil, errors.New("given name/path is not a directory")
-	}
-
-	// all done
-	return b, nil
+	return nil, err
 }
 
 // FindBox returns a Box instance for given name.
@@ -70,29 +80,39 @@ func findBox(name string) (*Box, error) {
 // When the given name is absolute, it's absolute. derp.
 // Make sure the path doesn't contain any sensitive information as it might be placed into generated go source (embedded).
 func FindBox(name string) (*Box, error) {
-	return findBox(name)
+	return findBox(name, defaultLocateOrder)
 }
 
 // MustFindBox returns a Box instance for given name, like FindBox does.
 // It does not return an error, instead it panics when an error occurs.
 func MustFindBox(name string) *Box {
-	box, err := findBox(name)
+	box, err := findBox(name, defaultLocateOrder)
 	if err != nil {
 		panic(err)
 	}
 	return box
 }
 
-func (b *Box) resolveAbsolutePathFromCaller() error {
-	_, callingGoFile, _, ok := runtime.Caller(3)
+// This is injected as a mutable function literal so that we can mock it out in
+// tests and return a fixed test file.
+var resolveAbsolutePathFromCaller = func(name string, nStackFrames int) (string, error) {
+	_, callingGoFile, _, ok := runtime.Caller(nStackFrames)
 	if !ok {
-		return errors.New("couldn't find caller on stack")
+		return "", errors.New("couldn't find caller on stack")
 	}
 
 	// resolve to proper path
 	pkgDir := filepath.Dir(callingGoFile)
-	b.absolutePath = filepath.Join(pkgDir, b.name)
-	return nil
+	return filepath.Join(pkgDir, name), nil
+}
+
+func (b *Box) resolveAbsolutePathFromCaller() error {
+	if path, err := resolveAbsolutePathFromCaller(b.name, 4); err != nil {
+		return err
+	} else {
+		b.absolutePath = path
+		return nil
+	}
 }
 
 // IsEmbedded indicates wether this box was embedded into the application
