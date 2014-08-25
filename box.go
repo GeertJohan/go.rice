@@ -107,12 +107,13 @@ var resolveAbsolutePathFromCaller = func(name string, nStackFrames int) (string,
 }
 
 func (b *Box) resolveAbsolutePathFromCaller() error {
-	if path, err := resolveAbsolutePathFromCaller(b.name, 4); err != nil {
+	path, err := resolveAbsolutePathFromCaller(b.name, 4)
+	if err != nil {
 		return err
-	} else {
-		b.absolutePath = path
-		return nil
 	}
+	b.absolutePath = path
+	return nil
+
 }
 
 // IsEmbedded indicates wether this box was embedded into the application
