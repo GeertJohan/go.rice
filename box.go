@@ -214,7 +214,7 @@ func (b *Box) Open(name string) (*File, error) {
 		// if this file is a directory, we want to be able to read and seek
 		if !appendedFile.dir {
 			// looks like malformed data in zip, error now
-			if appendedFile.data == nil {
+			if appendedFile.content == nil {
 				return nil, &os.PathError{
 					Op:   "open",
 					Path: "name",
@@ -222,7 +222,7 @@ func (b *Box) Open(name string) (*File, error) {
 				}
 			}
 			// create new bytes.Reader
-			f.appendedFileReader = bytes.NewReader(appendedFile.data)
+			f.appendedFileReader = bytes.NewReader(appendedFile.content)
 		}
 
 		// all done

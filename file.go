@@ -7,9 +7,12 @@ import (
 	"path/filepath"
 )
 
-// File abstracts file methods so the user doesn't see the difference between rice.virtualFile, rice.virtualDir and os.File
-// This type implements the io.Reader, io.Seeker, io.Closer and http.File interfaces
+// File implements the io.Reader, io.Seeker, io.Closer and http.File interfaces
 type File struct {
+	// File abstracts file methods so the user doesn't see the difference between rice.virtualFile, rice.virtualDir and os.File
+	// TODO: maybe use internal File interface and four implementations: *os.File, appendedFile, virtualFile, virtualDir
+
+	// real file on disk
 	realF *os.File
 
 	// when embedded (go)

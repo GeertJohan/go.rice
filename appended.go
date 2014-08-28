@@ -22,7 +22,7 @@ type appendedFile struct {
 	dir      bool
 	dirInfo  *appendedDirInfo
 	children []*appendedFile
-	data     []byte
+	content  []byte
 }
 
 // appendedBoxes is a public register of appendes boxes
@@ -72,20 +72,20 @@ func init() {
 		} else {
 			// this is a file, we need it's contents so we can create a bytes.Reader when the file is opened
 			// make a new byteslice
-			af.data = make([]byte, af.zipFile.FileInfo().Size())
+			af.content = make([]byte, af.zipFile.FileInfo().Size())
 			// ignore reading empty files from zip (empty file still is a valid file to be read though!)
-			if len(af.data) > 0 {
+			if len(af.content) > 0 {
 				// open io.ReadCloser
 				rc, err := af.zipFile.Open()
 				if err != nil {
-					af.data = nil // this will cause an error when the file is being opened or seeked (which is good)
+					af.content = nil // this will cause an error when the file is being opened or seeked (which is good)
 					// TODO: it's quite blunt to just log this stuff. but this is in init, so rice.Debug can't be changed yet..
 					log.Printf("error opening appended file %s: %v", af.zipFile.Name, err)
 				} else {
-					_, err = rc.Read(af.data)
+					_, err = rc.Read(af.content)
 					rc.Close()
 					if err != nil {
-						af.data = nil // this will cause an error when the file is being opened or seeked (which is good)
+						af.content = nil // this will cause an error when the file is being opened or seeked (which is good)
 						// TODO: it's quite blunt to just log this stuff. but this is in init, so rice.Debug can't be changed yet..
 						log.Printf("error reading data for appended file %s: %v", af.zipFile.Name, err)
 					}
