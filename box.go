@@ -3,13 +3,14 @@ package rice
 import (
 	"errors"
 	"fmt"
-	"github.com/GeertJohan/go.rice/embedded"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
+
+	"github.com/GeertJohan/go.rice/embedded"
 )
 
 // Box abstracts a directory for resources/files.
@@ -337,4 +338,9 @@ func (b *Box) MustString(name string) string {
 		panic(err)
 	}
 	return str
+}
+
+// Name returns the name of the box
+func (b *Box) Name() string {
+	return b.name
 }
