@@ -1,6 +1,7 @@
 package rice
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"github.com/GeertJohan/go.rice/embedded"
@@ -205,21 +206,27 @@ func (b *Box) Open(name string) (*File, error) {
 			}
 		}
 
-		// open io.ReadCloser
-		rc, err := appendedFile.zipFile.Open()
-		if err != nil {
-			return nil, &os.PathError{
-				Op:   "open",
-				Path: name,
-				Err:  os.ErrInvalid,
+		// create new file
+		f := &File{
+			appendedF: appendedFile,
+		}
+
+		// if this file is a directory, we want to be able to read and seek
+		if !appendedFile.dir {
+			// looks like malformed data in zip, error now
+			if appendedFile.data == nil {
+				return nil, &os.PathError{
+					Op:   "open",
+					Path: "name",
+					Err:  errors.New("error reading data from zip file"),
+				}
 			}
+			// create new bytes.Reader
+			f.appendedFileReader = bytes.NewReader(appendedFile.data)
 		}
 
 		// all done
-		return &File{
-			appendedF:  appendedFile,
-			appendedRC: rc,
-		}, nil
+		return f, nil
 	}
 
 	// perform os open
