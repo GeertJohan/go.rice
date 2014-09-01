@@ -116,7 +116,6 @@ This package is not completed yet. Though it already provides working embedding,
  - find boxes in imported packages
 
 Less important stuff:
- - The rice tool uses a simple regexp to find calls to `rice.FindBox(..)`, this should be changed to `go/ast` or maybe `go.tools/oracle`?
  - idea, os/arch dependent embeds. rice checks if embedding file has _os_arch or build flags. If box is not requested by file without buildflags, then the buildflags are applied to the embed file.
 
 ### Package documentation
