@@ -26,10 +26,10 @@ func (b *Box) Walk(path string, walkFn filepath.WalkFunc) error {
 	}
 
 	// We don't have any embedded or appended box so use live filesystem mode
-	return filepath.Walk(b.name+string(os.PathSeparator)+path, func(path string, info os.FileInfo, err error) error {
+	return filepath.Walk(b.absolutePath+string(os.PathSeparator)+path, func(path string, info os.FileInfo, err error) error {
 
 		// Strip out the box name from the returned paths
-		path = strings.Replace(path, b.name+string(os.PathSeparator), "", -1)
+		path = strings.TrimPrefix(path, b.absolutePath+string(os.PathSeparator))
 		return walkFn(path, info, err)
 
 	})
