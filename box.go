@@ -159,6 +159,28 @@ func (b *Box) Open(name string) (*File, error) {
 			fmt.Printf("Trying %s\n", name)
 		}
 
+		// open the box itself?
+		if name == "" || name == "." {
+			ed := embedded.EmbeddedDir{
+				Filename:   b.embed.Name,
+				DirModTime: b.embed.Time,
+				ChildDirs:  make([]*embedded.EmbeddedDir, 0, len(b.embed.Dirs)),
+				ChildFiles: make([]*embedded.EmbeddedFile, 0, len(b.embed.Files)),
+			}
+			for name, d := range b.embed.Dirs {
+				if !strings.Contains(name, "/") {
+					ed.ChildDirs = append(ed.ChildDirs, d)
+				}
+			}
+			for name, f := range b.embed.Files {
+				if !strings.Contains(name, "/") {
+					ed.ChildFiles = append(ed.ChildFiles, f)
+				}
+			}
+			vd := newVirtualDir(&ed)
+			return &File{virtualD: vd}, nil
+		}
+
 		// search for file
 		ef := b.embed.Files[name]
 		if ef == nil {
@@ -196,6 +218,11 @@ func (b *Box) Open(name string) (*File, error) {
 	if b.IsAppended() {
 		// trim prefix (paths are relative to box)
 		name = strings.TrimLeft(name, "/")
+
+		// open the box itself?
+		if name == "" || name == "." {
+			return nil, ErrNotImplemented //++ TODO: construct appendedFile from the box.
+		}
 
 		// search for file
 		appendedFile := b.appendd.Files[name]
