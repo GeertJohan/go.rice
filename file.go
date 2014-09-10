@@ -92,6 +92,41 @@ func (f *File) Readdir(count int) ([]os.FileInfo, error) {
 	return f.realF.Readdir(count)
 }
 
+// Readdirnames is like (*os.File).Readdirnames(), except that if the underlying
+// file is an appended zipped directory, it ignores n and returns all the names.
+// Visit http://golang.org/pkg/os/#File.Readdirnames for more information
+func (f *File) Readdirnames(n int) ([]string, error) {
+	if f == nil {
+		return nil, os.ErrInvalid
+	}
+	if f.appendedF != nil {
+		if !f.appendedF.dir {
+			return nil, &os.PathError{
+				Op:   "Readdirnames",
+				Path: filepath.Base(f.appendedF.zipFile.Name),
+				Err:  errors.New("not a directory"),
+			}
+		}
+
+		names := make([]string, len(f.appendedF.children))
+		for i, c := range f.appendedF.children {
+			if c.dir {
+				names[i] = c.dirInfo.name
+			} else {
+				names[i] = c.zipFile.Name
+			}
+		}
+		return names, nil
+	}
+	if f.virtualF != nil {
+		return f.virtualF.readdirnames(n)
+	}
+	if f.virtualD != nil {
+		return f.virtualD.readdirnames(n)
+	}
+	return f.realF.Readdirnames(n)
+}
+
 // Read is like (*os.File).Read()
 // Visit http://golang.org/pkg/os/#File.Read for more information
 func (f *File) Read(bts []byte) (int, error) {
