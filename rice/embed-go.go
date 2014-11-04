@@ -58,7 +58,7 @@ func operationEmbedGo(pkg *build.Package) {
 			filename = strings.TrimPrefix(filename, "/")
 			if info.IsDir() {
 				dirData := &dirDataType{
-					Identifier: "dir_" + nextIdentifier(),
+					Identifier: "dir" + nextIdentifier(),
 					FileName:   filename,
 					ModTime:    info.ModTime().Unix(),
 					ChildFiles: make([]*fileDataType, 0),
@@ -75,7 +75,7 @@ func operationEmbedGo(pkg *build.Package) {
 				}
 			} else {
 				fileData := &fileDataType{
-					Identifier: "file_" + nextIdentifier(),
+					Identifier: "file" + nextIdentifier(),
 					FileName:   filename,
 					ModTime:    info.ModTime().Unix(),
 				}
