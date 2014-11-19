@@ -88,7 +88,9 @@ func findBoxes(pkg *build.Package) map[string]bool {
 						boxMap[name] = true
 						verbosef("\tfound box %q\n", name)
 					} else {
-						verbosef("\tFound call to FindBox, but argument must be a literal!")
+						fmt.Printf("Error: found call to rice.FindBox in %s, "+
+							"but argument must be a string literal.\n", filename)
+						os.Exit(1)
 					}
 				}
 
@@ -97,8 +99,9 @@ func findBoxes(pkg *build.Package) map[string]bool {
 					nextIdentIsBoxFunc = false
 				}
 				if nextBasicLitParamIsBoxName {
-					verbosef("\tFound call to FindBox, but argument must be a literal!")
-					nextBasicLitParamIsBoxName = false
+					fmt.Printf("Error: found call to rice.FindBox in %s, "+
+						"but argument must be a string literal.\n", filename)
+					os.Exit(1)
 				}
 			}
 			return true
