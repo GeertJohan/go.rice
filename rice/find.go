@@ -11,6 +11,22 @@ import (
 	"strings"
 )
 
+func badArgument(fileset *token.FileSet, p token.Pos) {
+	pos := fileset.Position(p)
+	filename := pos.Filename
+	base, err := os.Getwd()
+	if err == nil {
+		rpath, perr := filepath.Rel(base, pos.Filename)
+		if perr == nil {
+			filename = rpath
+		}
+	}
+	msg := fmt.Sprintf("%s:%d: Error: found call to rice.FindBox, "+
+		"but argument must be a string literal.\n", filename, pos.Line)
+	fmt.Println(msg)
+	os.Exit(1)
+}
+
 func findBoxes(pkg *build.Package) map[string]bool {
 	// create one list of files for this package
 	filenames := make([]string, 0, len(pkg.GoFiles)+len(pkg.CgoFiles))
@@ -63,6 +79,7 @@ func findBoxes(pkg *build.Package) map[string]bool {
 		// Identifiers won't be resolved.
 		var nextIdentIsBoxFunc bool
 		var nextBasicLitParamIsBoxName bool
+		var boxCall token.Pos
 		ast.Inspect(f, func(node ast.Node) bool {
 			if node == nil {
 				return false
@@ -73,6 +90,7 @@ func findBoxes(pkg *build.Package) map[string]bool {
 					nextIdentIsBoxFunc = false
 					if x.Name == "FindBox" || x.Name == "MustFindBox" {
 						nextBasicLitParamIsBoxName = true
+						boxCall = x.Pos()
 					}
 				} else {
 					if x.Name == ricePkgName {
@@ -80,12 +98,16 @@ func findBoxes(pkg *build.Package) map[string]bool {
 					}
 				}
 			case *ast.BasicLit:
-				if nextBasicLitParamIsBoxName && x.Kind == token.STRING {
-					nextBasicLitParamIsBoxName = false
-					// trim "" or ``
-					name := x.Value[1 : len(x.Value)-1]
-					boxMap[name] = true
-					verbosef("\tfound box %q\n", name)
+				if nextBasicLitParamIsBoxName {
+					if x.Kind == token.STRING {
+						nextBasicLitParamIsBoxName = false
+						// trim "" or ``
+						name := x.Value[1 : len(x.Value)-1]
+						boxMap[name] = true
+						verbosef("\tfound box %q\n", name)
+					} else {
+						badArgument(fset, boxCall)
+					}
 				}
 
 			default:
@@ -93,7 +115,7 @@ func findBoxes(pkg *build.Package) map[string]bool {
 					nextIdentIsBoxFunc = false
 				}
 				if nextBasicLitParamIsBoxName {
-					nextBasicLitParamIsBoxName = false
+					badArgument(fset, boxCall)
 				}
 			}
 			return true
