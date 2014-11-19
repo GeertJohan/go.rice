@@ -25,6 +25,17 @@ http.Handle("/", http.FileServer(rice.MustFindBox("http-files").HTTPBox()))
 http.ListenAndServe(":8080", nil)
 ```
 
+**Service a static content folder over HTTP at a non-root location**
+```go
+box := rice.MustFindBox("cssfiles").HTTPBox()
+server := http.StripPrefix("/css/", http.FileServer(box))
+http.Handle("/css/", server)
+http.ListenAndServe(":8080", nil)
+```
+
+Note the *trailing slash* in `/css/` in both the call to
+`http.StripPrefix` and `http.Handle`.
+
 **Loading a template**
 ```go
 // find a rice.Box
