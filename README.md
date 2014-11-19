@@ -27,9 +27,9 @@ http.ListenAndServe(":8080", nil)
 
 **Service a static content folder over HTTP at a non-root location**
 ```go
-box := rice.MustFindBox("cssfiles").HTTPBox()
-server := http.StripPrefix("/css/", http.FileServer(box))
-http.Handle("/css/", server)
+box := rice.MustFindBox("cssfiles")
+cssFileServer := http.StripPrefix("/css/", http.FileServer(box.HTTPBox()))
+http.Handle("/css/", cssFileServer)
 http.ListenAndServe(":8080", nil)
 ```
 
