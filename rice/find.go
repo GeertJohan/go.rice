@@ -80,12 +80,16 @@ func findBoxes(pkg *build.Package) map[string]bool {
 					}
 				}
 			case *ast.BasicLit:
-				if nextBasicLitParamIsBoxName && x.Kind == token.STRING {
-					nextBasicLitParamIsBoxName = false
-					// trim "" or ``
-					name := x.Value[1 : len(x.Value)-1]
-					boxMap[name] = true
-					verbosef("\tfound box %q\n", name)
+				if nextBasicLitParamIsBoxName {
+					if x.Kind == token.STRING {
+						nextBasicLitParamIsBoxName = false
+						// trim "" or ``
+						name := x.Value[1 : len(x.Value)-1]
+						boxMap[name] = true
+						verbosef("\tfound box %q\n", name)
+					} else {
+						verbosef("\tFound call to FindBox, but argument must be a literal!")
+					}
 				}
 
 			default:
@@ -93,6 +97,7 @@ func findBoxes(pkg *build.Package) map[string]bool {
 					nextIdentIsBoxFunc = false
 				}
 				if nextBasicLitParamIsBoxName {
+					verbosef("\tFound call to FindBox, but argument must be a literal!")
 					nextBasicLitParamIsBoxName = false
 				}
 			}
