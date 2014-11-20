@@ -3,7 +3,6 @@ package main
 import (
 	"archive/zip"
 	"fmt"
-	"github.com/daaku/go.zipexe"
 	"go/build"
 	"io"
 	"os"

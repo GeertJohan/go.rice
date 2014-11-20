@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/akavel/rsrc/binutil"
-	"github.com/akavel/rsrc/coff"
 	"os"
 	"reflect"
+
+	"github.com/akavel/rsrc/binutil"
+	"github.com/akavel/rsrc/coff"
 )
 
 // copied from github.com/akavel/rsrc

@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
-	"github.com/GeertJohan/go.rice/embedded"
-	"github.com/akavel/rsrc/coff"
 	"go/build"
 	"io"
 	"io/ioutil"
@@ -15,6 +13,9 @@ import (
 	"strings"
 	"text/template"
 	"time"
+
+	"github.com/GeertJohan/go.rice/embedded"
+	"github.com/akavel/rsrc/coff"
 )
 
 type sizedReader struct {

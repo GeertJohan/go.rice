@@ -2,13 +2,13 @@ package rice
 
 import (
 	"archive/zip"
-	"bitbucket.org/kardianos/osext"
-	"github.com/daaku/go.zipexe"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"bitbucket.org/kardianos/osext"
 )
 
 // appendedBox defines an appended box

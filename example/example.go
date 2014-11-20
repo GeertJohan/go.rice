@@ -3,12 +3,13 @@ package main
 import (
 	"encoding/hex"
 	"fmt"
-	"github.com/GeertJohan/go.rice"
-	"github.com/davecgh/go-spew/spew"
 	"log"
 	"net/http"
 	"os"
 	"text/template"
+
+	"github.com/GeertJohan/go.rice"
+	"github.com/davecgh/go-spew/spew"
 )
 
 func main() {

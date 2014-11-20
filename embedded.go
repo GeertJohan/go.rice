@@ -1,9 +1,10 @@
 package rice
 
 import (
-	"github.com/GeertJohan/go.rice/embedded"
 	"os"
 	"time"
+
+	"github.com/GeertJohan/go.rice/embedded"
 )
 
 // re-type to make exported methods invisible to user (godoc)
