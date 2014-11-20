@@ -1,6 +1,10 @@
 package main
 
-import "strconv"
+import (
+	"strconv"
+
+	"github.com/GeertJohan/go.incremental"
+)
 
 var identifierCount incremental.Uint64
 
