@@ -64,6 +64,15 @@ rice embed-go
 go build
 ```
 
+*A Note on Symbolic Links*: `embed-go` uses the `os.Walk` function
+from the standard library.  The `os.Walk` function does **not** follow
+symbolic links.  So, when creating a box, be aware that any symbolic
+links inside your box's directory will not be followed.  **However**,
+if the box itself is a symbolic link, its actual location will be
+resolved first and then walked.  In summary, if your box location is a
+symbolic link, it will be followed but none of the symbolic links in
+the box will be followed.
+
 #### embed-syso
 **Embed resources by generating a coff .syso file and some .go source code**
 
