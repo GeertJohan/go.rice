@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"bitbucket.org/kardianos/osext"
+	"github.com/daaku/go.zipexe"
 )
 
 // appendedBox defines an appended box
