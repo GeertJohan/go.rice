@@ -11,6 +11,8 @@ import (
 	"runtime"
 	"strings"
 	"time"
+
+	"github.com/daaku/go.zipexe"
 )
 
 func operationAppend(pkg *build.Package) {
