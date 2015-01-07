@@ -42,7 +42,7 @@ func init() {
 
 	for _, f := range rd.File {
 		// get box and file name from f.Name
-		fileParts := strings.SplitN(strings.TrimLeft(f.Name, "/"), "/", 2)
+		fileParts := strings.SplitN(strings.TrimLeft(filepath.ToSlash(f.Name), "/"), "/", 2)
 		boxName := fileParts[0]
 		var fileName string
 		if len(fileParts) > 1 {
