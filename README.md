@@ -100,8 +100,6 @@ go build
 #### append
 **Append resources to executable as zip file**
 
-_Does not work on windows (yet)_
-
 This method changes an allready built executable. It appends the resources as zip file to the binary. It makes compilation a lot faster and can be used with large resource files.
 
 Downsides for appending are that it requires `zip` to be installed and does not provide a working Seek method.
@@ -111,6 +109,10 @@ Run the following commands to create a standalone executable.
 go build -o example
 rice append --exec example
 ```
+
+**Note: requires zip command to be installed**
+
+On windows, install zip from http://gnuwin32.sourceforge.net/packages/zip.htm or cygwin/msys toolsets.
 
 #### Help information
 Run `rice -h` for information about all options.
