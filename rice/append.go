@@ -17,8 +17,11 @@ import (
 
 func operationAppend(pkg *build.Package) {
 	if runtime.GOOS == "windows" {
-		fmt.Println("#### WARNING ! ####")
-		fmt.Println("`rice append` is known not to work under windows because the `zip` command is not available. Please let me know if you got this to work (and how).")
+		_, err := exec.LookPath("zip")
+		if err != nil {
+			fmt.Println("#### WARNING ! ####")
+			fmt.Println("`rice append` is known not to work under windows because the `zip` command is not available. Please let me know if you got this to work (and how).")
+		}
 	}
 
 	// MARKED FOR DELETION
