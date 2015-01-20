@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"time"
 
 	"github.com/daaku/go.zipexe"
 )
@@ -43,15 +42,6 @@ func operationAppend(pkg *build.Package) {
 
 	verbosef("\n")
 
-	// create tmp zipfile
-	tmpZipfileName := filepath.Join(os.TempDir(), fmt.Sprintf("ricebox-%d-%s.zip", time.Now().Unix(), randomString(10)))
-	verbosef("Will create tmp zipfile: %s\n", tmpZipfileName)
-	tmpZipfile, err := os.Create(tmpZipfileName)
-	if err != nil {
-		fmt.Printf("Error creating tmp zipfile: %s\n", err)
-		os.Exit(1)
-	}
-
 	// find abs path for binary file
 	binfileName, err := filepath.Abs(flags.Append.Executable)
 	if err != nil {
@@ -74,7 +64,12 @@ func operationAppend(pkg *build.Package) {
 	}
 
 	// create zip.Writer
-	zipWriter := zip.NewWriter(tmpZipfile)
+	binfileInfo, err := binfile.Stat()
+	if err != nil {
+		fmt.Printf("error stat binfile: %v", err)
+		os.Exit(1)
+	}
+	zipWriter := zip.NewWriterWithOptions(binfile, &zip.WriterOptions{Offset: binfileInfo.Size()})
 
 	for boxname := range boxMap {
 		appendedBoxName := strings.Replace(boxname, `/`, `-`, -1)
@@ -128,36 +123,7 @@ func operationAppend(pkg *build.Package) {
 
 	err = zipWriter.Close()
 	if err != nil {
-		fmt.Printf("Error closing tmp zipfile: %s\n", err)
-		os.Exit(1)
-	}
-
-	err = tmpZipfile.Sync()
-	if err != nil {
-		fmt.Printf("Error syncing tmp zipfile: %s\n", err)
-		os.Exit(1)
-	}
-	_, err = tmpZipfile.Seek(0, 0)
-	if err != nil {
-		fmt.Printf("Error seeking tmp zipfile: %s\n", err)
-		os.Exit(1)
-	}
-	_, err = binfile.Seek(0, 2)
-	if err != nil {
-		fmt.Printf("Error seeking bin file: %s\n", err)
-		os.Exit(1)
-	}
-
-	_, err = io.Copy(binfile, tmpZipfile)
-	if err != nil {
-		fmt.Printf("Error appending zipfile to executable: %s\n", err)
-		os.Exit(1)
-	}
-
-	zipA := exec.Command("zip", "-A", binfileName)
-	err = zipA.Run()
-	if err != nil {
-		fmt.Printf("Error setting zip offset: %s\n", err)
+		fmt.Printf("Error closing zip writer: %s\n", err)
 		os.Exit(1)
 	}
 }
