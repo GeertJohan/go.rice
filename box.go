@@ -267,11 +267,11 @@ func (b *Box) Bytes(name string) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
+		defer rc.Close()
 		cpy, err := ioutil.ReadAll(rc)
 		if err != nil {
 			return nil, err
 		}
-		rc.Close()
 		return cpy, nil
 	}
 

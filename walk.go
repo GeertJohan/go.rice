@@ -15,6 +15,7 @@ func (b *Box) Walk(path string, walkFn filepath.WalkFunc) error {
 	if err != nil {
 		return err
 	}
+	defer pathFile.Close()
 
 	pathInfo, err := pathFile.Stat()
 	if err != nil {
@@ -64,6 +65,7 @@ func (b *Box) walk(path string, info os.FileInfo, walkFn filepath.WalkFunc) erro
 		if err != nil {
 			return err
 		}
+		defer fileObject.Close()
 
 		fileInfo, err := fileObject.Stat()
 		if err != nil {
@@ -92,6 +94,7 @@ func (b *Box) readDirNames(path string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer f.Close()
 
 	stat, err := f.Stat()
 	if err != nil {
@@ -103,7 +106,6 @@ func (b *Box) readDirNames(path string) ([]string, error) {
 	}
 
 	infos, err := f.Readdir(0)
-	f.Close()
 	if err != nil {
 		return nil, err
 	}
