@@ -35,10 +35,11 @@ func init() {
 	if err != nil {
 		return // not apended or cant find self executable
 	}
-	rd, err := zipexe.Open(thisFile)
+	closer, rd, err := zipexe.Open(thisFile)
 	if err != nil {
 		return // not apended
 	}
+	defer closer.Close()
 
 	for _, f := range rd.File {
 		// get box and file name from f.Name
