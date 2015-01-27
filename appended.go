@@ -33,13 +33,12 @@ func init() {
 	// find if exec is appended
 	thisFile, err := osext.Executable()
 	if err != nil {
-		return // not apended or cant find self executable
+		return // not appended or cant find self executable
 	}
-	closer, rd, err := zipexe.Open(thisFile)
+	rd, err := zipexe.Open(thisFile)
 	if err != nil {
-		return // not apended
+		return // not appended
 	}
-	defer closer.Close()
 
 	for _, f := range rd.File {
 		// get box and file name from f.Name
