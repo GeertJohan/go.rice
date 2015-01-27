@@ -136,7 +136,6 @@ This project is licensed under a Simplified BSD license. Please read the [LICENS
 ### TODO & Development
 This package is not completed yet. Though it already provides working embedding, some important featuers are still missing.
  - implement Readdir() correctly on virtualDir
- - automated testing with TravisCI or Drone **important**
  - in-code TODO's
  - find boxes in imported packages
 
