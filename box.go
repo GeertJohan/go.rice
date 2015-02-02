@@ -241,6 +241,23 @@ func (b *Box) Open(name string) (*File, error) {
 	return &File{realF: file}, nil
 }
 
+// ReadFile returns the content of the file with given name as []byte.
+func (b *Box) ReadFile(name string) ([]byte, error) {
+	file, err := b.Open(name)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	content, err := ioutil.ReadAll(file)
+	if err != nil {
+		return nil, err
+	}
+
+	return content, nil
+}
+
+
 // Bytes returns the content of the file with given name as []byte.
 func (b *Box) Bytes(name string) ([]byte, error) {
 	// check if box is embedded
