@@ -59,7 +59,7 @@ func operationAppend(pkg *build.Package) {
 	verbosef("Will append to file: %s\n", binfileName)
 
 	// check that command doesn't already have zip appended
-	if rd, _ := ZipExeOpen(binfileName); rd != nil {
+	if rd, _ := zipExeOpen(binfileName); rd != nil {
 		fmt.Printf("Cannot append to already appended executable. Please remove %s and build a fresh one.\n", binfileName)
 		os.Exit(1)
 	}

@@ -13,7 +13,7 @@ import (
 // Ripped from daaku/go.zipexe to fix Open() signatures
 
 // Opens a zip file by path.
-func ZipExeOpen(path string) (io.Closer, *zip.Reader, error) {
+func zipExeOpen(path string) (io.Closer, *zip.Reader, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, nil, err
@@ -22,7 +22,7 @@ func ZipExeOpen(path string) (io.Closer, *zip.Reader, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	zr, err := NewZipExeReader(file, finfo.Size())
+	zr, err := newZipExeReader(file, finfo.Size())
 	if err != nil {
 		return nil, nil, err
 	}
@@ -31,7 +31,7 @@ func ZipExeOpen(path string) (io.Closer, *zip.Reader, error) {
 
 // Open a zip file, specially handling various binaries that may have been
 // augmented with zip data.
-func NewZipExeReader(rda io.ReaderAt, size int64) (*zip.Reader, error) {
+func newZipExeReader(rda io.ReaderAt, size int64) (*zip.Reader, error) {
 	handlers := []func(io.ReaderAt, int64) (*zip.Reader, error){
 		zip.NewReader,
 		zipExeReaderMacho,
