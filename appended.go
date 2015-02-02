@@ -8,8 +8,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/GeertJohan/go.rice/zipexe"
+
 	"bitbucket.org/kardianos/osext"
-	"github.com/daaku/go.zipexe"
 )
 
 // appendedBox defines an appended box
@@ -35,9 +36,15 @@ func init() {
 	if err != nil {
 		return // not appended or cant find self executable
 	}
-	rd, err := zipexe.Open(thisFile)
+	zipFile, zipSize, err := zipexe.Open(thisFile)
 	if err != nil {
 		return // not appended
+	}
+	defer zipFile.Close()
+
+	rd, err := zipexe.NewReader(zipFile, zipSize)
+	if err != nil {
+		return // not appended or not working
 	}
 
 	for _, f := range rd.File {

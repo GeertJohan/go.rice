@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/daaku/go.zipexe"
+	"github.com/GeertJohan/go.rice/zipexe"
 )
 
 func operationAppend(pkg *build.Package) {
@@ -61,10 +61,12 @@ func operationAppend(pkg *build.Package) {
 	verbosef("Will append to file: %s\n", binfileName)
 
 	// check that command doesn't already have zip appended
-	if rd, _ := zipexe.Open(binfileName); rd != nil {
+	rd, _, err := zipexe.Open(binfileName)
+	if err != nil {
 		fmt.Printf("Cannot append to already appended executable. Please remove %s and build a fresh one.\n", binfileName)
 		os.Exit(1)
 	}
+	rd.Close()
 
 	// open binfile
 	binfile, err := os.OpenFile(binfileName, os.O_WRONLY, os.ModeAppend)
