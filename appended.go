@@ -35,7 +35,7 @@ func init() {
 	if err != nil {
 		return // not apended or cant find self executable
 	}
-	closer, rd, err := zipexe.Open(thisFile)
+	closer, rd, err := zipexe.OpenCloser(thisFile)
 	if err != nil {
 		return // not apended
 	}
