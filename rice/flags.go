@@ -10,8 +10,8 @@ import (
 
 // flags
 var flags struct {
-	Verbose    bool   `long:"verbose" short:"v" description:"Show verbose debug information"`
-	ImportPath string `long:"import-path" short:"i" description:"Import path to use. Using PWD when left empty."`
+	Verbose     bool     `long:"verbose" short:"v" description:"Show verbose debug information"`
+	ImportPaths []string `long:"import-path" short:"i" description:"Import path(s) to use. Using PWD when left empty. Specify multiple times for more import paths to append"`
 
 	Append struct {
 		Executable string `long:"exec" description:"Executable to append" required:"true"`
@@ -60,7 +60,7 @@ func parseArguments() {
 	}
 
 	// default ImportPath to pwd when not set
-	if len(flags.ImportPath) == 0 {
+	if len(flags.ImportPaths) == 0 {
 		pwd, err := os.Getwd()
 		if err != nil {
 			fmt.Printf("error getting pwd: %s\n", err)
@@ -73,8 +73,8 @@ func parseArguments() {
 			fmt.Printf("error using current directory as import path: %s\n", err)
 			os.Exit(1)
 		}
-		flags.ImportPath = pkg.ImportPath
-		verbosef("using import path: %s\n", flags.ImportPath)
+		flags.ImportPaths = append(flags.ImportPaths, pkg.ImportPath)
+		verbosef("using import paths: %s\n", flags.ImportPaths)
 		return
 	}
 }

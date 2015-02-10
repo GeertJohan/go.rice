@@ -15,7 +15,7 @@ import (
 	"github.com/daaku/go.zipexe"
 )
 
-func operationAppend(pkg *build.Package) {
+func operationAppend(pkgs []*build.Package) {
 	if runtime.GOOS == "windows" {
 		_, err := exec.LookPath("zip")
 		if err != nil {
@@ -31,17 +31,6 @@ func operationAppend(pkg *build.Package) {
 	// 	fmt.Println("Error: can not append to non-main package. Please follow instructions at github.com/GeertJohan/go.rice")
 	// 	os.Exit(1)
 	// }
-
-	// find boxes for this command
-	boxMap := findBoxes(pkg)
-
-	// notify user when no calls to rice.FindBox are made (is this an error and therefore os.Exit(1) ?
-	if len(boxMap) == 0 {
-		fmt.Println("no calls to rice.FindBox() or rice.MustFindBox() found")
-		return
-	}
-
-	verbosef("\n")
 
 	// create tmp zipfile
 	tmpZipfileName := filepath.Join(os.TempDir(), fmt.Sprintf("ricebox-%d-%s.zip", time.Now().Unix(), randomString(10)))
@@ -76,54 +65,67 @@ func operationAppend(pkg *build.Package) {
 	// create zip.Writer
 	zipWriter := zip.NewWriter(tmpZipfile)
 
-	for boxname := range boxMap {
-		appendedBoxName := strings.Replace(boxname, `/`, `-`, -1)
+	for _, pkg := range pkgs {
+		// find boxes for this command
+		boxMap := findBoxes(pkg)
 
-		// walk box path's and insert files
-		boxPath := filepath.Clean(filepath.Join(pkg.Dir, boxname))
-		filepath.Walk(boxPath, func(path string, info os.FileInfo, err error) error {
-			// create zipFilename
-			zipFileName := filepath.Join(appendedBoxName, strings.TrimPrefix(path, boxPath))
+		// notify user when no calls to rice.FindBox are made (is this an error and therefore os.Exit(1) ?
+		if len(boxMap) == 0 {
+			fmt.Println("no calls to rice.FindBox() or rice.MustFindBox() found")
+			return
+		}
 
-			// write directories as empty file with comment "dir"
-			if info.IsDir() {
-				_, err := zipWriter.CreateHeader(&zip.FileHeader{
-					Name:    zipFileName,
-					Comment: "dir",
-				})
+		verbosef("\n")
+
+		for boxname := range boxMap {
+			appendedBoxName := strings.Replace(boxname, `/`, `-`, -1)
+
+			// walk box path's and insert files
+			boxPath := filepath.Clean(filepath.Join(pkg.Dir, boxname))
+			filepath.Walk(boxPath, func(path string, info os.FileInfo, err error) error {
+				// create zipFilename
+				zipFileName := filepath.Join(appendedBoxName, strings.TrimPrefix(path, boxPath))
+
+				// write directories as empty file with comment "dir"
+				if info.IsDir() {
+					_, err := zipWriter.CreateHeader(&zip.FileHeader{
+						Name:    zipFileName,
+						Comment: "dir",
+					})
+					if err != nil {
+						fmt.Printf("Error creating dir in tmp zip: %s\n", err)
+						os.Exit(1)
+					}
+					return nil
+				}
+
+				// create zipFileWriter
+				zipFileHeader, err := zip.FileInfoHeader(info)
 				if err != nil {
-					fmt.Printf("Error creating dir in tmp zip: %s\n", err)
+					fmt.Printf("Error creating zip FileHeader: %v\n", err)
 					os.Exit(1)
 				}
+				zipFileHeader.Name = zipFileName
+				zipFileWriter, err := zipWriter.CreateHeader(zipFileHeader)
+				if err != nil {
+					fmt.Printf("Error creating file in tmp zip: %s\n", err)
+					os.Exit(1)
+				}
+				srcFile, err := os.Open(path)
+				if err != nil {
+					fmt.Printf("Error opening file to append: %s\n", err)
+					os.Exit(1)
+				}
+				_, err = io.Copy(zipFileWriter, srcFile)
+				if err != nil {
+					fmt.Printf("Error copying file contents to zip: %s\n", err)
+					os.Exit(1)
+				}
+				srcFile.Close()
+
 				return nil
-			}
-
-			// create zipFileWriter
-			zipFileHeader, err := zip.FileInfoHeader(info)
-			if err != nil {
-				fmt.Printf("Error creating zip FileHeader: %v\n", err)
-				os.Exit(1)
-			}
-			zipFileHeader.Name = zipFileName
-			zipFileWriter, err := zipWriter.CreateHeader(zipFileHeader)
-			if err != nil {
-				fmt.Printf("Error creating file in tmp zip: %s\n", err)
-				os.Exit(1)
-			}
-			srcFile, err := os.Open(path)
-			if err != nil {
-				fmt.Printf("Error opening file to append: %s\n", err)
-				os.Exit(1)
-			}
-			_, err = io.Copy(zipFileWriter, srcFile)
-			if err != nil {
-				fmt.Printf("Error copying file contents to zip: %s\n", err)
-				os.Exit(1)
-			}
-			srcFile.Close()
-
-			return nil
-		})
+			})
+		}
 	}
 
 	err = zipWriter.Close()
