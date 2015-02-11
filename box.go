@@ -242,7 +242,7 @@ func (b *Box) Open(name string) (*File, error) {
 }
 
 // ReadFile returns the content of the file with given name as []byte.
-func (b *Box) ReadFile(name string) ([]byte, error) {
+func (b *Box) Bytes(name string) ([]byte, error) {
 	file, err := b.Open(name)
 	if err != nil {
 		return nil, err
@@ -257,55 +257,6 @@ func (b *Box) ReadFile(name string) ([]byte, error) {
 	return content, nil
 }
 
-
-// Bytes returns the content of the file with given name as []byte.
-func (b *Box) Bytes(name string) ([]byte, error) {
-	// check if box is embedded
-	if b.IsEmbedded() {
-		// find file in embed
-		ef := b.embed.Files[name]
-		if ef == nil {
-			return nil, os.ErrNotExist
-		}
-		// clone byteSlice
-		cpy := make([]byte, 0, len(ef.Content))
-		cpy = append(cpy, ef.Content...)
-		// return copied bytes
-		return cpy, nil
-	}
-
-	// check if box is appended
-	if b.IsAppended() {
-		af := b.appendd.Files[name]
-		if af == nil {
-			return nil, os.ErrNotExist
-		}
-		rc, err := af.zipFile.Open()
-		if err != nil {
-			return nil, err
-		}
-		defer rc.Close()
-		cpy, err := ioutil.ReadAll(rc)
-		if err != nil {
-			return nil, err
-		}
-		return cpy, nil
-	}
-
-	// open actual file from disk
-	file, err := os.Open(filepath.Join(b.absolutePath, name))
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-	// read complete content
-	bts, err := ioutil.ReadAll(file)
-	if err != nil {
-		return nil, err
-	}
-	// return result
-	return bts, nil
-}
 
 // MustBytes returns the content of the file with given name as []byte.
 // panic's on error.
