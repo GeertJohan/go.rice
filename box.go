@@ -241,7 +241,7 @@ func (b *Box) Open(name string) (*File, error) {
 	return &File{realF: file}, nil
 }
 
-// ReadFile returns the content of the file with given name as []byte.
+// Bytes returns the content of the file with given name as []byte.
 func (b *Box) Bytes(name string) ([]byte, error) {
 	file, err := b.Open(name)
 	if err != nil {
@@ -257,7 +257,6 @@ func (b *Box) Bytes(name string) ([]byte, error) {
 	return content, nil
 }
 
-
 // MustBytes returns the content of the file with given name as []byte.
 // panic's on error.
 func (b *Box) MustBytes(name string) []byte {
@@ -270,7 +269,7 @@ func (b *Box) MustBytes(name string) []byte {
 
 // String returns the content of the file with given name as string.
 func (b *Box) String(name string) (string, error) {
-	// check if box is embedded
+	// check if box is embedded, optimized fast path
 	if b.IsEmbedded() {
 		// find file in embed
 		ef := b.embed.Files[name]
@@ -281,27 +280,10 @@ func (b *Box) String(name string) (string, error) {
 		return ef.Content, nil
 	}
 
-	// check if box is apended
-	if b.IsAppended() {
-		bts, err := b.Bytes(name)
-		if err != nil {
-			return "", err
-		}
-		return string(bts), nil
-	}
-
-	// open actual file from disk
-	file, err := os.Open(filepath.Join(b.absolutePath, name))
+	bts, err := b.Bytes(name)
 	if err != nil {
 		return "", err
 	}
-	defer file.Close()
-	// read complete content
-	bts, err := ioutil.ReadAll(file)
-	if err != nil {
-		return "", err
-	}
-	// return result as string
 	return string(bts), nil
 }
 
