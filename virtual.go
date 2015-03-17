@@ -131,9 +131,9 @@ func (vf *virtualFile) seek(offset int64, whence int) (int64, error) {
 	return vf.offset, nil
 }
 
-// vritualDir is a 'stateful' virtual directory.
-// vritualDir wraps an *EmbeddedDir for a call to Box.Open() and virtualizes 'closing'.
-// vritualDir is only internally visible and should be exposed through rice.File
+// virtualDir is a 'stateful' virtual directory.
+// virtualDir wraps an *EmbeddedDir for a call to Box.Open() and virtualizes 'closing'.
+// virtualDir is only internally visible and should be exposed through rice.File
 type virtualDir struct {
 	*embedded.EmbeddedDir
 	offset int // readdir positon on the directory

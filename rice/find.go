@@ -28,13 +28,13 @@ func badArgument(fileset *token.FileSet, p token.Pos) {
 }
 
 func findBoxes(pkg *build.Package) map[string]bool {
+	// create map of boxes to embed
+	var boxMap = make(map[string]bool)
+
 	// create one list of files for this package
 	filenames := make([]string, 0, len(pkg.GoFiles)+len(pkg.CgoFiles))
 	filenames = append(filenames, pkg.GoFiles...)
 	filenames = append(filenames, pkg.CgoFiles...)
-
-	// create map of boxes to embed
-	var boxMap = make(map[string]bool)
 
 	// loop over files, search for rice.FindBox(..) calls
 	for _, filename := range filenames {
