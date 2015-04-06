@@ -105,6 +105,14 @@ var resolveAbsolutePathFromCaller = func(name string, nStackFrames int) (string,
 
 	// resolve to proper path
 	pkgDir := filepath.Dir(callingGoFile)
+	// fix for go cover
+	const coverPath = "_test/_obj_test"
+	if !filepath.IsAbs(pkgDir) {
+		if i := strings.Index(pkgDir, coverPath); i >= 0 {
+			pkgDir = pkgDir[:i] + pkgDir[i+len(coverPath):]            // remove coverPath
+			pkgDir = filepath.Join(os.Getenv("GOPATH"), "src", pkgDir) // make absolute
+		}
+	}
 	return filepath.Join(pkgDir, name), nil
 }
 
