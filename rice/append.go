@@ -83,9 +83,12 @@ func operationAppend(pkgs []*build.Package) {
 			// walk box path's and insert files
 			boxPath := filepath.Clean(filepath.Join(pkg.Dir, boxname))
 			filepath.Walk(boxPath, func(path string, info os.FileInfo, err error) error {
+				if (info == nil) {
+					fmt.Printf("Error: box \"%s\" not found on disk\n", path)
+					os.Exit(1)
+				}
 				// create zipFilename
 				zipFileName := filepath.Join(appendedBoxName, strings.TrimPrefix(path, boxPath))
-
 				// write directories as empty file with comment "dir"
 				if info.IsDir() {
 					_, err := zipWriter.CreateHeader(&zip.FileHeader{
