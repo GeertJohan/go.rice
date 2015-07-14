@@ -4,9 +4,10 @@ package rice
 type LocateMethod int
 
 const (
-	LocateFS       = LocateMethod(iota) // Locate on the filesystem.
-	LocateAppended                      // Locate boxes appended to the executable.
-	LocateEmbedded                      // Locate embedded boxes.
+	LocateFS               = LocateMethod(iota) // Locate on the filesystem according to package path.
+	LocateAppended                              // Locate boxes appended to the executable.
+	LocateEmbedded                              // Locate embedded boxes.
+	LocateWorkingDirectory                      // Locate on the binary working directory
 )
 
 // Config allows customizing the box lookup behavior.

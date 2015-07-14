@@ -67,6 +67,23 @@ func findBox(name string, order []LocateMethod) (*Box, error) {
 				continue
 			}
 			return b, nil
+		case LocateWorkingDirectory:
+			// resolve absolute directory path
+			err := b.resolveAbsolutePathFromWorkingDirectory()
+			if err != nil {
+				continue
+			}
+			// check if absolutePath exists on filesystem
+			info, err := os.Stat(b.absolutePath)
+			if err != nil {
+				continue
+			}
+			// check if absolutePath is actually a directory
+			if !info.IsDir() {
+				err = errors.New("given name/path is not a directory")
+				continue
+			}
+			return b, nil
 		}
 	}
 
@@ -124,6 +141,15 @@ func (b *Box) resolveAbsolutePathFromCaller() error {
 	b.absolutePath = path
 	return nil
 
+}
+
+func (b *Box) resolveAbsolutePathFromWorkingDirectory() error {
+	path, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	b.absolutePath = filepath.Join(path, b.name)
+	return nil
 }
 
 // IsEmbedded indicates wether this box was embedded into the application
