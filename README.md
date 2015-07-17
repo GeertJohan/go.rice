@@ -130,7 +130,7 @@ When opening a new box, the rice package tries to locate the resources in the fo
  - 'live' from filesystem
 
 
-### Licence
+### License
 This project is licensed under a Simplified BSD license. Please read the [LICENSE file][license].
 
 ### TODO & Development
