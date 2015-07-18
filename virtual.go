@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"syscall"
 
 	"github.com/GeertJohan/go.rice/embedded"
 )
@@ -248,6 +247,6 @@ func (vd *virtualDir) seek(offset int64, whence int) (int64, error) {
 	return 0, &os.PathError{
 		Op:   "seek",
 		Path: vd.Filename,
-		Err:  syscall.EISDIR,
+		Err:  errors.New("is a directory"),
 	}
 }
