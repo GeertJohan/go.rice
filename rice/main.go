@@ -25,7 +25,7 @@ func main() {
 			operationEmbedGo(pkg)
 		}
 	case "embed-syso":
-		log.Println("WARNING: embedding .syso is expirimental..")
+		log.Println("WARNING: embedding .syso is experimental..")
 		for _, pkg := range pkgs {
 			operationEmbedSyso(pkg)
 		}
