@@ -19,6 +19,7 @@ import (
 	"time"
 )
 
+{{range .Boxes}}
 func init() {
 
 	// define files
@@ -60,15 +61,20 @@ func init() {
 			{{end}}
 		},
 	})
-}`)
+}
+{{end}}`)
 	if err != nil {
 		fmt.Printf("error parsing embedded box template: %s\n", err)
 		os.Exit(-1)
 	}
 }
 
-type boxDataType struct {
+type embedFileDataType struct {
 	Package string
+	Boxes   []*boxDataType
+}
+
+type boxDataType struct {
 	BoxName string
 	UnixNow int64
 	Files   []*fileDataType

@@ -68,7 +68,7 @@ The `rice` tool lets you add the resources to a binary executable so the files a
 #### embed-go
 **Embed resources by generating Go source code**
 
-This method must be executed before building. It generates Go source files that are compiled by the go compiler into the binary.
+This method must be executed before building. It generates a single Go source file called *rice-box.go* for each package, that is compiled by the go compiler into the binary.
 
 The downside with this option is that the generated go source files can become very large, which will slow down compilation and require lots of memory to compile.
 
@@ -149,4 +149,3 @@ You will find package documentation at [godoc.org/github.com/GeertJohan/go.rice]
 
  [license]: https://github.com/GeertJohan/go.rice/blob/master/LICENSE
  [godoc]: http://godoc.org/github.com/GeertJohan/go.rice
- 
