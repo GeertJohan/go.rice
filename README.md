@@ -12,7 +12,7 @@ This only works when the source is available to the machine executing the binary
 
 ### Installation
 
-Use `go get` for the package and `go install` for the tool.
+Use `go get` to install the package the `rice` tool.
 ```
 go get github.com/GeertJohan/go.rice
 go get github.com/GeertJohan/go.rice/rice
