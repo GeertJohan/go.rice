@@ -11,7 +11,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 )
 
 const boxFilename = "rice-box.go"
@@ -45,19 +44,21 @@ func operationEmbedGo(pkg *build.Package) {
 		// verbose info
 		verbosef("embedding box '%s' to '%s'\n", boxname, boxFilename)
 
-		// create box datastructure (used by template)
-		box := &boxDataType{
-			BoxName: boxname,
-			UnixNow: time.Now().Unix(),
-			Files:   make([]*fileDataType, 0),
-			Dirs:    make(map[string]*dirDataType),
-		}
-
+		// read box metadata
 		boxInfo, ierr := os.Stat(boxPath)
 		if ierr != nil {
 			fmt.Printf("Error: unable to access box at %s\n", boxPath)
 			os.Exit(1)
 		}
+
+		// create box datastructure (used by template)
+		box := &boxDataType{
+			BoxName: boxname,
+			UnixNow: boxInfo.ModTime().Unix(),
+			Files:   make([]*fileDataType, 0),
+			Dirs:    make(map[string]*dirDataType),
+		}
+
 		if !boxInfo.IsDir() {
 			fmt.Printf("Error: Box %s must point to a directory but points to %s instead\n",
 				boxname, boxPath)
