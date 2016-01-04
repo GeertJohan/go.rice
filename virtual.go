@@ -135,7 +135,7 @@ func (vf *virtualFile) seek(offset int64, whence int) (int64, error) {
 // virtualDir is only internally visible and should be exposed through rice.File
 type virtualDir struct {
 	*embedded.EmbeddedDir
-	offset int // readdir positon on the directory
+	offset int // readdir position on the directory
 	closed bool
 }
 
