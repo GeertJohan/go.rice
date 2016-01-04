@@ -12,7 +12,6 @@ import (
 	"regexp"
 	"strings"
 	"text/template"
-	"time"
 
 	"github.com/GeertJohan/go.rice/embedded"
 	"github.com/akavel/rsrc/coff"
@@ -94,10 +93,17 @@ func operationEmbedSyso(pkg *build.Package) {
 		verbosef("embedding box '%s'\n", boxname)
 		verbosef("\tto file %s\n", boxFilename)
 
+		// read box metadata
+		boxInfo, ierr := os.Stat(boxPath)
+		if ierr != nil {
+			fmt.Printf("Error: unable to access box at %s\n", boxPath)
+			os.Exit(1)
+		}
+
 		// create box datastructure (used by template)
 		box := &embedded.EmbeddedBox{
 			Name:      boxname,
-			Time:      time.Now(),
+			Time:      boxInfo.ModTime(),
 			EmbedType: embedded.EmbedTypeSyso,
 			Files:     make(map[string]*embedded.EmbeddedFile),
 			Dirs:      make(map[string]*embedded.EmbeddedDir),
