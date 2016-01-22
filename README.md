@@ -103,7 +103,7 @@ go build
 #### append
 **Append resources to executable as zip file**
 
-This method changes an allready built executable. It appends the resources as zip file to the binary. It makes compilation a lot faster and can be used with large resource files.
+This method changes an already built executable. It appends the resources as zip file to the binary. It makes compilation a lot faster and can be used with large resource files.
 
 Downsides for appending are that it requires `zip` to be installed and does not provide a working Seek method.
 
