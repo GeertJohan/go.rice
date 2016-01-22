@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kardianos/osext"
 	"github.com/daaku/go.zipexe"
+	"github.com/kardianos/osext"
 )
 
 // appendedBox defines an appended box

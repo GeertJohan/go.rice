@@ -212,7 +212,7 @@ func (vd *virtualDir) readdir(n int) (fi []os.FileInfo, err error) {
 	if vd.offset+n >= len(files) {
 		offset := vd.offset
 		vd.offset = 0
-		return files[offset:len(files)], io.EOF
+		return files[offset:], io.EOF
 	}
 
 	offset := vd.offset
