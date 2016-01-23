@@ -83,7 +83,7 @@ func operationAppend(pkgs []*build.Package) {
 			// walk box path's and insert files
 			boxPath := filepath.Clean(filepath.Join(pkg.Dir, boxname))
 			filepath.Walk(boxPath, func(path string, info os.FileInfo, err error) error {
-				if (info == nil) {
+				if info == nil {
 					fmt.Printf("Error: box \"%s\" not found on disk\n", path)
 					os.Exit(1)
 				}
