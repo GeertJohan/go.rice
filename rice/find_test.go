@@ -76,6 +76,39 @@ func main() {
 	}
 }
 
+func TestFindOneBoxViaVariable(t *testing.T) {
+
+	pkg, cleanup, err := setUpTestPkg("foobar", []sourceFile{
+		{
+			"boxes.go",
+			[]byte(`package main
+
+import (
+	"github.com/GeertJohan/go.rice"
+)
+
+func main() {
+	conf := rice.Config{
+		LocateOrder: []rice.LocateMethod{rice.LocateEmbedded, rice.LocateAppended, rice.LocateFS},
+	}
+	conf.MustFindBox("foo")
+}
+`),
+		},
+	})
+	defer cleanup()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	expectedBoxes := []string{"foo"}
+	boxMap := findBoxes(pkg)
+	if err := expectBoxes(expectedBoxes, boxMap); err != nil {
+		t.Error(err)
+	}
+}
+
 func TestFindMultipleBoxes(t *testing.T) {
 	pkg, cleanup, err := setUpTestPkg("foobar", []sourceFile{
 		{
