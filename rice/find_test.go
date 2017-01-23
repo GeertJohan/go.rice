@@ -190,7 +190,7 @@ func FindBox(s string) {
 func LoadBoxes() {
 	rice := fakerice{}
 	rice.FindBox("foo")
-	
+
 	FindBox("bar")
 }
 `),
@@ -232,7 +232,7 @@ func FindBox(s string) {
 func LoadBoxes1() {
 	rice := fakerice{}
 	rice.FindBox("foo")
-	
+
 	FindBox("bar")
 }
 `),
