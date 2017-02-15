@@ -26,6 +26,7 @@ func init() {
 	{{range .Files}}{{.Identifier}} := &embedded.EmbeddedFile{
 		Filename:    {{.FileName | printf "%q"}},
 		FileModTime: time.Unix({{.ModTime}}, 0),
+
 		Content:     string({{.Content | printf "%q"}}),
 	}
 	{{end}}
