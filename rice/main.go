@@ -5,6 +5,7 @@ import (
 	"go/build"
 	"log"
 	"os"
+	"runtime/pprof"
 )
 
 func main() {
@@ -40,6 +41,15 @@ func main() {
 	// all done
 	verbosef("\n")
 	verbosef("rice finished successfully\n")
+
+	if flags.MemProfile != "" {
+		f, err := os.Create(flags.MemProfile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pprof.WriteHeapProfile(f)
+		f.Close()
+	}
 }
 
 // helper function to get *build.Package for given path
