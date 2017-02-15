@@ -12,6 +12,15 @@ func main() {
 	// parser arguments
 	parseArguments()
 
+	if flags.CpuProfile != "" {
+		f, err := os.Create(flags.CpuProfile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
+
 	// find package for path
 	var pkgs []*build.Package
 	for _, importPath := range flags.ImportPaths {
