@@ -153,9 +153,9 @@ func writeBoxesGo(pkg *build.Package, out io.Writer) error {
 	}
 
 	bufWriter := bufio.NewWriterSize(out, 100*1024)
-	bufReader := bufio.NewReaderSize(nil, 100*1024)
+	const bufSize = 100 * 1024
+	var buffer [bufSize]byte
 
-	/**/
 	_, err = ft.ExecuteFunc(bufWriter, func(w io.Writer, tag string) (int, error) {
 		fileName, err := strconv.Unquote("\"" + tag + "\"")
 		if err != nil {
@@ -166,20 +166,36 @@ func writeBoxesGo(pkg *build.Package, out io.Writer) error {
 			return 0, err
 		}
 
-		bufReader.Reset(f)
 		n := 0
 
+		var processed = bufSize
+		var dataLen = 0
+
 		for {
-			data, peekErr := bufReader.Peek(utf8.UTFMax)
-			// even if peekErr is io.EOF, we need to process data
-			if peekErr != nil && peekErr != io.EOF {
-				err = peekErr
+			if processed+utf8.UTFMax > bufSize {
+				// need to read more
+				leftover := bufSize - processed
+				if leftover > 0 {
+					copy(buffer[:leftover], buffer[processed:])
+				}
+				read, peekErr := f.Read(buffer[leftover:])
+				if peekErr != nil && peekErr != io.EOF {
+					err = peekErr
+					break
+				}
+				dataLen = leftover + read
+				processed = 0
+			}
+			if dataLen-processed == 0 {
 				break
 			}
-			// break if done
-			if len(data) == 0 {
-				break
+
+			maxRune := processed + utf8.UTFMax
+			if maxRune > dataLen {
+				maxRune = dataLen
 			}
+			data := buffer[processed:maxRune]
+
 			var discard, n2 int
 			r, width := utf8.DecodeRune(data)
 			if width == 1 && r == utf8.RuneError {
@@ -243,108 +259,14 @@ func writeBoxesGo(pkg *build.Package, out io.Writer) error {
 					}
 				}
 			}
-			bufReader.Discard(discard)
+			processed += discard
 			n += n2
 		}
-
-		//	for {
-		//		var n2 int
-		//		data, err2 := bufReader.Peek(utf8.UTFMax)
-		//		if err2 == io.EOF {
-		//			break
-		//		}
-		//		if err2 != nil {
-		//			err = err2
-		//			break
-		//		}
-		//		discard := 1
-		//		switch b := data[0]; b {
-		//		case '\\':
-		//			n2, err2 = w.Write([]byte(`\\`))
-		//		case '"':
-		//			n2, err2 = w.Write([]byte(`\"`))
-		//		case '\n':
-		//			n2, err2 = w.Write([]byte(`\n`))
-
-		//		case '\x00':
-		//			// https://golang.org/ref/spec#Source_code_representation: "Implementation
-		//			// restriction: For compatibility with other tools, a compiler may
-		//			// disallow the NUL character (U+0000) in the source text."
-		//			n2, err2 = w.Write([]byte(`\x00`))
-
-		//		default:
-		//			// https://golang.org/ref/spec#Source_code_representation: "Implementation
-		//			// restriction: […] A byte order mark may be disallowed anywhere else in
-		//			// the source."
-		//			const byteOrderMark = '\uFEFF'
-
-		//			if r, size := utf8.DecodeRune(data); r != utf8.RuneError && r != byteOrderMark {
-		//				n2, err2 = w.Write(data[:size])
-		//				discard = size
-		//			} else {
-		//				n2, err2 = fmt.Fprintf(w, `\x%02x`, b)
-		//			}
-		//		}
-		//		n += n2
-		//		bufReader.Discard(discard)
-		//		if err2 != nil {
-		//			err = err2
-		//			break
-		//		}
-		//	}
-
-		//	for {
-		//		r, size, err2 := bufReader.ReadRune()
-		//		if err2 == io.EOF {
-		//			err = nil
-		//			break
-		//		}
-		//		if err2 != nil {
-		//			err = err2
-		//			break
-		//		}
-		//		var n2 int
-		//		if r == unicode.ReplacementChar && size == 1 {
-		//			bufReader.UnreadByte()
-		//			b, err2 := bufReader.ReadByte()
-		//			if err2 != nil {
-		//				err = err2
-		//				break
-		//			}
-		//			n2, err2 = fmt.Fprintf(w, "\\x%x", b)
-		//		} else {
-		//			if r == '"' {
-		//				n2, err2 = fmt.Fprint(w, "\\\"")
-		//			} else if r == '\'' {
-		//				n2, err2 = fmt.Fprint(w, "'")
-		//			} else {
-		//				quoted := strconv.QuoteRune(r)
-		//				n2, err2 = fmt.Fprintf(w, "%v", quoted[1:len(quoted)-1])
-		//			}
-		//		}
-		//		n += n2
-		//		if err2 != nil {
-		//			err = err2
-		//			break
-		//		}
-		//	}
 
 		f.Close()
 
 		return int(n), err
 	})
-	/**/
-
-	/*
-		_, err = ft.ExecuteFunc(bufWriter, func(w io.Writer, tag string) (int, error) {
-			fileContent, err := ioutil.ReadFile(tag)
-			if err != nil {
-				return 0, err
-			}
-			quoted := strconv.Quote(string(fileContent))
-			return fmt.Fprint(w, quoted[1:len(quoted)-1])
-		})
-	*/
 	if err != nil {
 		return fmt.Errorf("error writing embedSource to file: %s\n", err)
 	}
