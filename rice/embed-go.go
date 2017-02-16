@@ -7,17 +7,19 @@ import (
 	"go/build"
 	"go/format"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/valyala/fasttemplate"
 )
 
 const boxFilename = "rice-box.go"
+
+const lowerhex = "0123456789abcdef"
 
 func writeBoxesGo(pkg *build.Package, out io.Writer) error {
 	boxMap := findBoxes(pkg)
@@ -150,105 +152,8 @@ func writeBoxesGo(pkg *build.Package, out io.Writer) error {
 		return fmt.Errorf("error writing embedSource to file (fasttemplate compile): %s\n", err)
 	}
 
-	bufWriter := bufio.NewWriterSize(out, 16*1024*1024)
-
-	/*
-		_, err = ft.ExecuteFunc(bufWriter, func(w io.Writer, tag string) (int, error) {
-			f, err := os.Open(tag)
-			if err != nil {
-				return 0, err
-			}
-
-			bufReader := bufio.NewReaderSize(f, 16*1024*1024)
-			n := 0
-
-			for {
-				var n2 int
-				data, err2 := bufReader.Peek(utf8.MaxRune)
-				if err2 == io.EOF {
-					break
-				}
-				if err2 != nil {
-					err = err2
-					break
-				}
-				discard := 1
-				switch b := data[0]; b {
-				case '\\':
-					n2, err2 = w.Write([]byte(`\\`))
-				case '"':
-					n2, err2 = w.Write([]byte(`\"`))
-				case '\n':
-					n2, err2 = w.Write([]byte(`\n`))
-
-				case '\x00':
-					// https://golang.org/ref/spec#Source_code_representation: "Implementation
-					// restriction: For compatibility with other tools, a compiler may
-					// disallow the NUL character (U+0000) in the source text."
-					n2, err2 = w.Write([]byte(`\x00`))
-
-				default:
-					// https://golang.org/ref/spec#Source_code_representation: "Implementation
-					// restriction: […] A byte order mark may be disallowed anywhere else in
-					// the source."
-					const byteOrderMark = '\uFEFF'
-
-					if r, size := utf8.DecodeRune(data); r != utf8.RuneError && r != byteOrderMark {
-						n2, err2 = w.Write(data[:size])
-						discard = size
-					} else {
-						n2, err2 = fmt.Fprintf(w, `\x%02x`, b)
-					}
-				}
-				n += n2
-				bufReader.Discard(discard)
-				if err2 != nil {
-					err = err2
-					break
-				}
-			}
-
-			//	for {
-			//		r, size, err2 := bufReader.ReadRune()
-			//		if err2 == io.EOF {
-			//			err = nil
-			//			break
-			//		}
-			//		if err2 != nil {
-			//			err = err2
-			//			break
-			//		}
-			//		var n2 int
-			//		if r == unicode.ReplacementChar && size == 1 {
-			//			bufReader.UnreadByte()
-			//			b, err2 := bufReader.ReadByte()
-			//			if err2 != nil {
-			//				err = err2
-			//				break
-			//			}
-			//			n2, err2 = fmt.Fprintf(w, "\\x%x", b)
-			//		} else {
-			//			if r == '"' {
-			//				n2, err2 = fmt.Fprint(w, "\\\"")
-			//			} else if r == '\'' {
-			//				n2, err2 = fmt.Fprint(w, "'")
-			//			} else {
-			//				quoted := strconv.QuoteRune(r)
-			//				n2, err2 = fmt.Fprintf(w, "%v", quoted[1:len(quoted)-1])
-			//			}
-			//		}
-			//		n += n2
-			//		if err2 != nil {
-			//			err = err2
-			//			break
-			//		}
-			//	}
-
-			f.Close()
-
-			return int(n), err
-		})
-	*/
+	bufWriter := bufio.NewWriterSize(out, 100*1024)
+	bufReader := bufio.NewReaderSize(nil, 100*1024)
 
 	/**/
 	_, err = ft.ExecuteFunc(bufWriter, func(w io.Writer, tag string) (int, error) {
@@ -256,14 +161,190 @@ func writeBoxesGo(pkg *build.Package, out io.Writer) error {
 		if err != nil {
 			return 0, err
 		}
-		fileContent, err := ioutil.ReadFile(fileName)
+		f, err := os.Open(fileName)
 		if err != nil {
 			return 0, err
 		}
-		quoted := strconv.Quote(string(fileContent))
-		return fmt.Fprint(w, quoted[1:len(quoted)-1])
+
+		bufReader.Reset(f)
+		n := 0
+
+		for {
+			data, peekErr := bufReader.Peek(utf8.UTFMax)
+			// even if peekErr is io.EOF, we need to process data
+			if peekErr != nil && peekErr != io.EOF {
+				err = peekErr
+				break
+			}
+			// break if done
+			if len(data) == 0 {
+				break
+			}
+			var discard, n2 int
+			r, width := utf8.DecodeRune(data)
+			if width == 1 && r == utf8.RuneError {
+				w.Write([]byte{'\\', 'x', lowerhex[data[0]>>4], lowerhex[data[0]&0xF]})
+				n2 = 4
+				discard = 1
+			} else {
+				discard = width
+				if r == rune('"') || r == '\\' { // always backslashed
+					w.Write([]byte{'\\', byte(r)})
+					n2 = 2
+				} else if strconv.IsPrint(r) {
+					w.Write(data[:width])
+					n2 = width
+				} else {
+					switch r {
+					case '\a':
+						w.Write([]byte{'\\', 'a'})
+						n2 = 2
+					case '\b':
+						w.Write([]byte{'\\', 'b'})
+						n2 = 2
+					case '\f':
+						w.Write([]byte{'\\', 'f'})
+						n2 = 2
+					case '\n':
+						w.Write([]byte{'\\', 'n'})
+						n2 = 2
+					case '\r':
+						w.Write([]byte{'\\', 'r'})
+						n2 = 2
+					case '\t':
+						w.Write([]byte{'\\', 't'})
+						n2 = 2
+					case '\v':
+						w.Write([]byte{'\\', 'v'})
+						n2 = 2
+					default:
+						switch {
+						case r < ' ':
+							w.Write([]byte{'\\', 'x', lowerhex[data[0]>>4], lowerhex[data[0]&0xF]})
+							n2 = 4
+						case r > utf8.MaxRune:
+							r = 0xFFFD
+							fallthrough
+						case r < 0x10000:
+							w.Write([]byte{'\\', 'u'})
+							n2 = 2
+							for s := 12; s >= 0; s -= 4 {
+								w.Write([]byte{lowerhex[r>>uint(s)&0xF]})
+								n2++
+							}
+						default:
+							w.Write([]byte{'\\', 'U'})
+							n2 = 2
+							for s := 28; s >= 0; s -= 4 {
+								w.Write([]byte{lowerhex[r>>uint(s)&0xF]})
+								n2++
+							}
+						}
+					}
+				}
+			}
+			bufReader.Discard(discard)
+			n += n2
+		}
+
+		//	for {
+		//		var n2 int
+		//		data, err2 := bufReader.Peek(utf8.UTFMax)
+		//		if err2 == io.EOF {
+		//			break
+		//		}
+		//		if err2 != nil {
+		//			err = err2
+		//			break
+		//		}
+		//		discard := 1
+		//		switch b := data[0]; b {
+		//		case '\\':
+		//			n2, err2 = w.Write([]byte(`\\`))
+		//		case '"':
+		//			n2, err2 = w.Write([]byte(`\"`))
+		//		case '\n':
+		//			n2, err2 = w.Write([]byte(`\n`))
+
+		//		case '\x00':
+		//			// https://golang.org/ref/spec#Source_code_representation: "Implementation
+		//			// restriction: For compatibility with other tools, a compiler may
+		//			// disallow the NUL character (U+0000) in the source text."
+		//			n2, err2 = w.Write([]byte(`\x00`))
+
+		//		default:
+		//			// https://golang.org/ref/spec#Source_code_representation: "Implementation
+		//			// restriction: […] A byte order mark may be disallowed anywhere else in
+		//			// the source."
+		//			const byteOrderMark = '\uFEFF'
+
+		//			if r, size := utf8.DecodeRune(data); r != utf8.RuneError && r != byteOrderMark {
+		//				n2, err2 = w.Write(data[:size])
+		//				discard = size
+		//			} else {
+		//				n2, err2 = fmt.Fprintf(w, `\x%02x`, b)
+		//			}
+		//		}
+		//		n += n2
+		//		bufReader.Discard(discard)
+		//		if err2 != nil {
+		//			err = err2
+		//			break
+		//		}
+		//	}
+
+		//	for {
+		//		r, size, err2 := bufReader.ReadRune()
+		//		if err2 == io.EOF {
+		//			err = nil
+		//			break
+		//		}
+		//		if err2 != nil {
+		//			err = err2
+		//			break
+		//		}
+		//		var n2 int
+		//		if r == unicode.ReplacementChar && size == 1 {
+		//			bufReader.UnreadByte()
+		//			b, err2 := bufReader.ReadByte()
+		//			if err2 != nil {
+		//				err = err2
+		//				break
+		//			}
+		//			n2, err2 = fmt.Fprintf(w, "\\x%x", b)
+		//		} else {
+		//			if r == '"' {
+		//				n2, err2 = fmt.Fprint(w, "\\\"")
+		//			} else if r == '\'' {
+		//				n2, err2 = fmt.Fprint(w, "'")
+		//			} else {
+		//				quoted := strconv.QuoteRune(r)
+		//				n2, err2 = fmt.Fprintf(w, "%v", quoted[1:len(quoted)-1])
+		//			}
+		//		}
+		//		n += n2
+		//		if err2 != nil {
+		//			err = err2
+		//			break
+		//		}
+		//	}
+
+		f.Close()
+
+		return int(n), err
 	})
 	/**/
+
+	/*
+		_, err = ft.ExecuteFunc(bufWriter, func(w io.Writer, tag string) (int, error) {
+			fileContent, err := ioutil.ReadFile(tag)
+			if err != nil {
+				return 0, err
+			}
+			quoted := strconv.Quote(string(fileContent))
+			return fmt.Fprint(w, quoted[1:len(quoted)-1])
+		})
+	*/
 	if err != nil {
 		return fmt.Errorf("error writing embedSource to file: %s\n", err)
 	}
