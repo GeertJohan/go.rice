@@ -22,7 +22,10 @@ func operationAppend(pkgs []*build.Package) {
 		fmt.Printf("Error creating tmp zipfile: %s\n", err)
 		os.Exit(1)
 	}
-	defer os.Remove(tmpZipfileName)
+	defer func() {
+		tmpZipfile.Close()
+		os.Remove(tmpZipfileName)
+	}()
 
 	// find abs path for binary file
 	binfileName, err := filepath.Abs(flags.Append.Executable)
