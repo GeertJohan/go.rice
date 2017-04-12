@@ -1,9 +1,10 @@
-box: wercker/golang
+box: golang:1.7.3
 
 build:
   steps:
-    - setup-go-workspace
-    
+    - setup-go-workspace:
+        package-dir: github.com/GeertJohan/go.rice
+
     - script:
         name: get dependencies
         code: |
@@ -23,7 +24,7 @@ build:
         name: vet
         code: |
           go vet ./...
-        
+
     - script:
         name: lint
         code: |
