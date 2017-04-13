@@ -500,6 +500,22 @@ func main() {
 			"foo/bar/baz/test1.txt",
 			[]byte(`This is test 1 in bar/baz`),
 		},
+		{
+			"foo/bar/baz/backtick`.txt",
+			[]byte(`Backtick filename`),
+		},
+		{
+			"foo/bar/baz/\"quote\".txt",
+			[]byte(`double quoted filename`),
+		},
+		{
+			"foo/bar/baz/'quote'.txt",
+			[]byte(`single quoted filename`),
+		},
+		{
+			"foo/`/`/`.txt",
+			[]byte(`Backticks everywhere!`),
+		},
 	}
 	pkg, cleanup, err := setUpTestPkg("foobar", sourceFiles)
 	defer cleanup()
