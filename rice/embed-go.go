@@ -12,16 +12,15 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"unicode/utf8"
 
+	"github.com/nkovacs/streamquote"
 	"github.com/valyala/fasttemplate"
 )
 
 const boxFilename = "rice-box.go"
 
-const lowerhex = "0123456789abcdef"
-
 func writeBoxesGo(pkg *build.Package, out io.Writer) error {
+
 	boxMap := findBoxes(pkg)
 
 	// notify user when no calls to rice.FindBox are made (is this an error and therefore os.Exit(1) ?
@@ -102,12 +101,10 @@ func writeBoxesGo(pkg *build.Package, out io.Writer) error {
 					ModTime:    info.ModTime().Unix(),
 				}
 				verbosef("\tincludes file: '%s'\n", fileData.FileName)
-				/*
-					fileData.Content, err = ioutil.ReadFile(path)
-					if err != nil {
-						return fmt.Errorf("error reading file content while walking box: %s\n", err)
-					}
-				*/
+
+				// Instead of injecting content, inject placeholder for fasttemplate.
+				// This allows us to stream the content into the final file,
+				// and it also avoids running gofmt on a very large source code.
 				fileData.Content = []byte("{%" + path + "%}")
 				box.Files = append(box.Files, fileData)
 
@@ -153,8 +150,7 @@ func writeBoxesGo(pkg *build.Package, out io.Writer) error {
 	}
 
 	bufWriter := bufio.NewWriterSize(out, 100*1024)
-	const bufSize = 100 * 1024
-	var buffer [bufSize]byte
+	converter := streamquote.New()
 
 	_, err = ft.ExecuteFunc(bufWriter, func(w io.Writer, tag string) (int, error) {
 		fileName, err := strconv.Unquote("\"" + tag + "\"")
@@ -166,106 +162,11 @@ func writeBoxesGo(pkg *build.Package, out io.Writer) error {
 			return 0, err
 		}
 
-		n := 0
-
-		var processed = bufSize
-		var dataLen = 0
-
-		for {
-			if processed+utf8.UTFMax > bufSize {
-				// need to read more
-				leftover := bufSize - processed
-				if leftover > 0 {
-					copy(buffer[:leftover], buffer[processed:])
-				}
-				read, peekErr := f.Read(buffer[leftover:])
-				if peekErr != nil && peekErr != io.EOF {
-					err = peekErr
-					break
-				}
-				dataLen = leftover + read
-				processed = 0
-			}
-			if dataLen-processed == 0 {
-				break
-			}
-
-			maxRune := processed + utf8.UTFMax
-			if maxRune > dataLen {
-				maxRune = dataLen
-			}
-			data := buffer[processed:maxRune]
-
-			var discard, n2 int
-			r, width := utf8.DecodeRune(data)
-			if width == 1 && r == utf8.RuneError {
-				w.Write([]byte{'\\', 'x', lowerhex[data[0]>>4], lowerhex[data[0]&0xF]})
-				n2 = 4
-				discard = 1
-			} else {
-				discard = width
-				if r == rune('"') || r == '\\' { // always backslashed
-					w.Write([]byte{'\\', byte(r)})
-					n2 = 2
-				} else if strconv.IsPrint(r) {
-					w.Write(data[:width])
-					n2 = width
-				} else {
-					switch r {
-					case '\a':
-						w.Write([]byte{'\\', 'a'})
-						n2 = 2
-					case '\b':
-						w.Write([]byte{'\\', 'b'})
-						n2 = 2
-					case '\f':
-						w.Write([]byte{'\\', 'f'})
-						n2 = 2
-					case '\n':
-						w.Write([]byte{'\\', 'n'})
-						n2 = 2
-					case '\r':
-						w.Write([]byte{'\\', 'r'})
-						n2 = 2
-					case '\t':
-						w.Write([]byte{'\\', 't'})
-						n2 = 2
-					case '\v':
-						w.Write([]byte{'\\', 'v'})
-						n2 = 2
-					default:
-						switch {
-						case r < ' ':
-							w.Write([]byte{'\\', 'x', lowerhex[data[0]>>4], lowerhex[data[0]&0xF]})
-							n2 = 4
-						case r > utf8.MaxRune:
-							r = 0xFFFD
-							fallthrough
-						case r < 0x10000:
-							w.Write([]byte{'\\', 'u'})
-							n2 = 2
-							for s := 12; s >= 0; s -= 4 {
-								w.Write([]byte{lowerhex[r>>uint(s)&0xF]})
-								n2++
-							}
-						default:
-							w.Write([]byte{'\\', 'U'})
-							n2 = 2
-							for s := 28; s >= 0; s -= 4 {
-								w.Write([]byte{lowerhex[r>>uint(s)&0xF]})
-								n2++
-							}
-						}
-					}
-				}
-			}
-			processed += discard
-			n += n2
-		}
+		n, err := converter.Convert(f, w)
 
 		f.Close()
 
-		return int(n), err
+		return n, err
 	})
 	if err != nil {
 		return fmt.Errorf("error writing embedSource to file: %s\n", err)
