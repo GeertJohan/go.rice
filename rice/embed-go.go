@@ -15,7 +15,7 @@ import (
 
 const boxFilename = "rice-box.go"
 
-func operationEmbedGo(pkg *build.Package) {
+func operationEmbedGo(pkg *build.Package, excludePaths []string) {
 
 	boxMap := findBoxes(pkg)
 
@@ -76,44 +76,62 @@ func operationEmbedGo(pkg *build.Package) {
 			filename = strings.Replace(filename, "\\", "/", -1)
 			filename = strings.TrimPrefix(filename, "/")
 			if info.IsDir() {
-				dirData := &dirDataType{
-					Identifier: "dir" + nextIdentifier(),
-					FileName:   filename,
-					ModTime:    info.ModTime().Unix(),
-					ChildFiles: make([]*fileDataType, 0),
-					ChildDirs:  make([]*dirDataType, 0),
+				includeDir := true
+				for _, excludePath := range excludePaths {
+					if strings.Contains(filename, excludePath) {
+						includeDir = false
+						break
+					}
 				}
-				verbosef("\tincludes dir: '%s'\n", dirData.FileName)
-				box.Dirs[dirData.FileName] = dirData
+				if includeDir {
+					dirData := &dirDataType{
+						Identifier: "dir" + nextIdentifier(),
+						FileName:   filename,
+						ModTime:    info.ModTime().Unix(),
+						ChildFiles: make([]*fileDataType, 0),
+						ChildDirs:  make([]*dirDataType, 0),
+					}
+					verbosef("\tincludes dir: '%s'\n", dirData.FileName)
+					box.Dirs[dirData.FileName] = dirData
 
-				// add tree entry (skip for root, it'll create a recursion)
-				if dirData.FileName != "" {
-					pathParts := strings.Split(dirData.FileName, "/")
-					parentDir := box.Dirs[strings.Join(pathParts[:len(pathParts)-1], "/")]
-					parentDir.ChildDirs = append(parentDir.ChildDirs, dirData)
+					// add tree entry (skip for root, it'll create a recursion)
+					if dirData.FileName != "" {
+						pathParts := strings.Split(dirData.FileName, "/")
+						parentDir := box.Dirs[strings.Join(pathParts[:len(pathParts)-1], "/")]
+						parentDir.ChildDirs = append(parentDir.ChildDirs, dirData)
+					}
 				}
 			} else {
-				fileData := &fileDataType{
-					Identifier: "file" + nextIdentifier(),
-					FileName:   filename,
-					ModTime:    info.ModTime().Unix(),
+				includeFile := true
+				for _, excludePath := range excludePaths {
+					if strings.Contains(filename, excludePath) {
+						includeFile = false
+						break
+					}
 				}
-				verbosef("\tincludes file: '%s'\n", fileData.FileName)
-				fileData.Content, err = ioutil.ReadFile(path)
-				if err != nil {
-					fmt.Printf("error reading file content while walking box: %s\n", err)
-					os.Exit(1)
-				}
-				box.Files = append(box.Files, fileData)
+				if includeFile {
+					fileData := &fileDataType{
+						Identifier: "file" + nextIdentifier(),
+						FileName:   filename,
+						ModTime:    info.ModTime().Unix(),
+					}
+					verbosef("\tincludes file: '%s'\n", fileData.FileName)
+					fileData.Content, err = ioutil.ReadFile(path)
+					if err != nil {
+						fmt.Printf("error reading file content while walking box: %s\n", err)
+						os.Exit(1)
+					}
+					box.Files = append(box.Files, fileData)
 
-				// add tree entry
-				pathParts := strings.Split(fileData.FileName, "/")
-				parentDir := box.Dirs[strings.Join(pathParts[:len(pathParts)-1], "/")]
-				if parentDir == nil {
-					fmt.Printf("Error: parent of %s is not within the box\n", path)
-					os.Exit(1)
+					// add tree entry
+					pathParts := strings.Split(fileData.FileName, "/")
+					parentDir := box.Dirs[strings.Join(pathParts[:len(pathParts)-1], "/")]
+					if parentDir == nil {
+						fmt.Printf("Error: parent of %s is not within the box\n", path)
+						os.Exit(1)
+					}
+					parentDir.ChildFiles = append(parentDir.ChildFiles, fileData)
 				}
-				parentDir.ChildFiles = append(parentDir.ChildFiles, fileData)
 			}
 			return nil
 		})
