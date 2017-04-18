@@ -516,6 +516,10 @@ func main() {
 			"foo/`/`/`.txt",
 			[]byte(`Backticks everywhere!`),
 		},
+		{
+			"foo/new\nline",
+			[]byte("File with newline in name. Yes, this is possible."),
+		},
 	}
 	pkg, cleanup, err := setUpTestPkg("foobar", sourceFiles)
 	defer cleanup()

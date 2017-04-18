@@ -35,7 +35,7 @@ func init() {
 		Filename:    {{.FileName | printf "%q"}},
 		DirModTime: time.Unix({{.ModTime}}, 0),
 		ChildFiles:  []*embedded.EmbeddedFile{
-			{{range .ChildFiles}}{{.Identifier}}, // {{.FileName}}
+			{{range .ChildFiles}}{{.Identifier}}, // {{.FileName | printf "%q"}}
 			{{end}}
 		},
 	}
@@ -43,7 +43,7 @@ func init() {
 
 	// link ChildDirs
 	{{range .Dirs}}{{.Identifier}}.ChildDirs = []*embedded.EmbeddedDir{
-		{{range .ChildDirs}}{{.Identifier}}, // {{.FileName}}
+		{{range .ChildDirs}}{{.Identifier}}, // {{.FileName | printf "%q"}}
 		{{end}}
 	}
 	{{end}}
