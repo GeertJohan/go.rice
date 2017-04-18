@@ -39,7 +39,11 @@ func setUpTestPkg(pkgName string, files []sourceFile) (*build.Package, func(), e
 		return nil, cleanup, err
 	}
 	for _, f := range files {
-		if err := ioutil.WriteFile(filepath.Join(dir, f.Name), f.Contents, 0660); err != nil {
+		fullPath := filepath.Join(dir, f.Name)
+		if err := os.MkdirAll(filepath.Dir(fullPath), 0770); err != nil {
+			return nil, cleanup, err
+		}
+		if err := ioutil.WriteFile(fullPath, f.Contents, 0660); err != nil {
 			return nil, cleanup, err
 		}
 	}
@@ -190,7 +194,7 @@ func FindBox(s string) {
 func LoadBoxes() {
 	rice := fakerice{}
 	rice.FindBox("foo")
-	
+
 	FindBox("bar")
 }
 `),
@@ -232,7 +236,7 @@ func FindBox(s string) {
 func LoadBoxes1() {
 	rice := fakerice{}
 	rice.FindBox("foo")
-	
+
 	FindBox("bar")
 }
 `),
