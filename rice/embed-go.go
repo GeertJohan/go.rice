@@ -10,17 +10,12 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
-
-	"github.com/nkovacs/streamquote"
-	"github.com/valyala/fasttemplate"
 )
 
 const boxFilename = "rice-box.go"
 
 func writeBoxesGo(pkg *build.Package, out io.Writer) error {
-
 	boxMap := findBoxes(pkg)
 
 	// notify user when no calls to rice.FindBox are made (is this an error and therefore os.Exit(1) ?
@@ -105,7 +100,7 @@ func writeBoxesGo(pkg *build.Package, out io.Writer) error {
 				// Instead of injecting content, inject placeholder for fasttemplate.
 				// This allows us to stream the content into the final file,
 				// and it also avoids running gofmt on a very large source code.
-				fileData.Content = []byte("{%" + path + "%}")
+				fileData.Path = path
 				box.Files = append(box.Files, fileData)
 
 				// add tree entry
@@ -119,7 +114,7 @@ func writeBoxesGo(pkg *build.Package, out io.Writer) error {
 			return nil
 		})
 		if err != nil {
-			return err
+			return fmt.Errorf("filepath walk: %v\n", err)
 		}
 		boxes = append(boxes, box)
 
@@ -143,31 +138,8 @@ func writeBoxesGo(pkg *build.Package, out io.Writer) error {
 	}
 
 	// write source to file
-	// inject file contents
-	ft, err := fasttemplate.NewTemplate(string(embedSource), "{%", "%}")
-	if err != nil {
-		return fmt.Errorf("error writing embedSource to file (fasttemplate compile): %s\n", err)
-	}
-
 	bufWriter := bufio.NewWriterSize(out, 100*1024)
-	converter := streamquote.New()
-
-	_, err = ft.ExecuteFunc(bufWriter, func(w io.Writer, tag string) (int, error) {
-		fileName, err := strconv.Unquote("\"" + tag + "\"")
-		if err != nil {
-			return 0, err
-		}
-		f, err := os.Open(fileName)
-		if err != nil {
-			return 0, err
-		}
-
-		n, err := converter.Convert(f, w)
-
-		f.Close()
-
-		return n, err
-	})
+	err = embeddedBoxFasttemplate(bufWriter, string(embedSource))
 	if err != nil {
 		return fmt.Errorf("error writing embedSource to file: %s\n", err)
 	}
