@@ -153,8 +153,7 @@ func operationEmbedGo(pkg *build.Package) {
 	}
 	defer boxFile.Close()
 
-	writeBoxesGo(pkg, boxFile)
-
+	err = writeBoxesGo(pkg, boxFile)
 	if err != nil {
 		log.Printf("error creating embedded box file: %s\n", err)
 		os.Exit(1)
