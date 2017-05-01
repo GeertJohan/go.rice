@@ -15,15 +15,7 @@ import (
 
 const boxFilename = "rice-box.go"
 
-func writeBoxesGo(pkg *build.Package, out io.Writer) error {
-	boxMap := findBoxes(pkg)
-
-	// notify user when no calls to rice.FindBox are made (is this an error and therefore os.Exit(1) ?
-	if len(boxMap) == 0 {
-		fmt.Println("no calls to rice.FindBox() found")
-		return nil
-	}
-
+func writeBoxesGo(pkg *build.Package, boxMap map[string]bool, out io.Writer) error {
 	verbosef("\n")
 
 	var boxes []*boxDataType
@@ -145,6 +137,14 @@ func writeBoxesGo(pkg *build.Package, out io.Writer) error {
 }
 
 func operationEmbedGo(pkg *build.Package) {
+	boxMap := findBoxes(pkg)
+
+	// notify user when no calls to rice.FindBox are made (is this an error and therefore os.Exit(1) ?
+	if len(boxMap) == 0 {
+		fmt.Println("no calls to rice.FindBox() found")
+		os.Exit(0) // to keep compatibility with previous versions
+	}
+
 	// create go file for box
 	boxFile, err := os.Create(filepath.Join(pkg.Dir, boxFilename))
 	if err != nil {
@@ -153,7 +153,7 @@ func operationEmbedGo(pkg *build.Package) {
 	}
 	defer boxFile.Close()
 
-	err = writeBoxesGo(pkg, boxFile)
+	err = writeBoxesGo(pkg, boxMap, boxFile)
 	if err != nil {
 		log.Printf("error creating embedded box file: %s\n", err)
 		os.Exit(1)
