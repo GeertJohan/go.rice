@@ -77,3 +77,30 @@ func main() {
 
 	validateBoxFile(t, filepath.Join(pkg.Dir, "rice-box.go"), &buffer, sourceFiles)
 }
+
+func TestEmbedGoEmpty(t *testing.T) {
+	sourceFiles := []sourceFile{
+		{
+			"boxes.go",
+			[]byte(`package main
+
+func main() {
+}
+`),
+		},
+	}
+	pkg, cleanup, err := setUpTestPkg("foobar", sourceFiles)
+	defer cleanup()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+
+	var buffer bytes.Buffer
+
+	err = writeBoxesGo(pkg, &buffer)
+	if err != errEmptyBox {
+		t.Errorf("expected errEmptyBox, got %v", err)
+		return
+	}
+}

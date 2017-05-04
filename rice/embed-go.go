@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"go/build"
 	"go/format"
@@ -15,13 +16,15 @@ import (
 
 const boxFilename = "rice-box.go"
 
+// errEmptyBox is returned by writeBoxesGo when no calls to rice.FindBox
+// are found in the package.
+var errEmptyBox = errors.New("no calls to rice.FindBox() found")
+
 func writeBoxesGo(pkg *build.Package, out io.Writer) error {
 	boxMap := findBoxes(pkg)
 
-	// notify user when no calls to rice.FindBox are made (is this an error and therefore os.Exit(1) ?
 	if len(boxMap) == 0 {
-		fmt.Println("no calls to rice.FindBox() found")
-		return nil
+		return errEmptyBox
 	}
 
 	verbosef("\n")
@@ -151,11 +154,22 @@ func operationEmbedGo(pkg *build.Package) {
 		log.Printf("error creating embedded box file: %s\n", err)
 		os.Exit(1)
 	}
-	defer boxFile.Close()
 
 	err = writeBoxesGo(pkg, boxFile)
+	boxFile.Close()
 	if err != nil {
-		log.Printf("error creating embedded box file: %s\n", err)
-		os.Exit(1)
+		// don't leave an invalid go file in the package directory.
+		if errRemove := os.Remove(boxFile.Name()); errRemove != nil {
+			log.Printf("error while removing file: %s\n", errRemove)
+		}
+		if err != errEmptyBox {
+			log.Printf("error creating embedded box file: %s\n", err)
+			os.Exit(1)
+		} else {
+			// notify user when no calls to rice.FindBox are made,
+			// but don't fail, since it's useful to be able to run
+			// go.rice unconditionally.
+			log.Println(errEmptyBox)
+		}
 	}
 }
