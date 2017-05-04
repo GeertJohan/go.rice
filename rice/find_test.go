@@ -2,17 +2,8 @@ package main
 
 import (
 	"fmt"
-	"go/build"
-	"io/ioutil"
-	"os"
-	"path/filepath"
 	"testing"
 )
-
-type sourceFile struct {
-	Name     string
-	Contents []byte
-}
 
 func expectBoxes(expected []string, actual map[string]bool) error {
 	if len(expected) != len(actual) {
@@ -24,31 +15,6 @@ func expectBoxes(expected []string, actual map[string]bool) error {
 		}
 	}
 	return nil
-}
-
-func setUpTestPkg(pkgName string, files []sourceFile) (*build.Package, func(), error) {
-	temp, err := ioutil.TempDir("", "go.rice-test")
-	if err != nil {
-		return nil, func() {}, err
-	}
-	cleanup := func() {
-		os.RemoveAll(temp)
-	}
-	dir := filepath.Join(temp, pkgName)
-	if err := os.Mkdir(dir, 0770); err != nil {
-		return nil, cleanup, err
-	}
-	for _, f := range files {
-		fullPath := filepath.Join(dir, f.Name)
-		if err := os.MkdirAll(filepath.Dir(fullPath), 0770); err != nil {
-			return nil, cleanup, err
-		}
-		if err := ioutil.WriteFile(fullPath, f.Contents, 0660); err != nil {
-			return nil, cleanup, err
-		}
-	}
-	pkg, err := build.ImportDir(dir, 0)
-	return pkg, cleanup, err
 }
 
 func TestFindOneBox(t *testing.T) {
