@@ -72,6 +72,20 @@ func (vf *virtualFile) readdir(count int) ([]os.FileInfo, error) {
 	return nil, ErrNotImplemented
 }
 
+func (vf *virtualFile) readdirnames(n int) ([]string, error) {
+	var err error
+	if vf.closed {
+		err = errors.New("bad file descriptor")
+	} else {
+		err = errors.New("not a directory")
+	}
+	return nil, &os.PathError{
+		Op:   "readdirnames",
+		Path: vf.EmbeddedFile.Filename,
+		Err:  err,
+	}
+}
+
 func (vf *virtualFile) read(bts []byte) (int, error) {
 	if vf.closed {
 		return 0, &os.PathError{
@@ -219,6 +233,43 @@ func (vd *virtualDir) readdir(n int) (fi []os.FileInfo, err error) {
 	vd.offset += n
 	return files[offset : offset+n], nil
 
+}
+
+func (vd *virtualDir) readdirnames(n int) ([]string, error) {
+	if vd.closed {
+		return nil, &os.PathError{
+			Op:   "readdirnames",
+			Path: vd.EmbeddedDir.Filename,
+			Err:  errors.New("bad file descriptor"),
+		}
+	}
+
+	size := n
+	if size <= 0 {
+		size = 100
+		n = -1
+	}
+
+	names := make([]string, 0, size)
+L:
+	for n != 0 {
+		switch {
+		case vd.offset < len(vd.ChildDirs):
+			names = append(names, vd.ChildDirs[vd.offset].Filename)
+			vd.offset++
+			n--
+		case vd.offset < len(vd.ChildDirs)+len(vd.ChildFiles):
+			names = append(names, vd.ChildFiles[vd.offset-len(vd.ChildDirs)].Filename)
+			vd.offset++
+			n--
+		default:
+			break L
+		}
+	}
+	if n >= 0 && len(names) == 0 {
+		return names, io.EOF
+	}
+	return names, nil
 }
 
 func (vd *virtualDir) read(bts []byte) (int, error) {
