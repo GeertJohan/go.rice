@@ -2,6 +2,7 @@ package rice
 
 import (
 	"net/http"
+	"strings"
 )
 
 // HTTPBox implements http.FileSystem which allows the use of Box with a http.FileServer.
@@ -17,5 +18,9 @@ func (b *Box) HTTPBox() *HTTPBox {
 
 // Open returns a File using the http.File interface
 func (hb *HTTPBox) Open(name string) (http.File, error) {
+	prefix := "/" + hb.Box.name
+	if strings.HasPrefix(name, prefix) {
+		name = name[len(prefix):]
+	}
 	return hb.Box.Open(name)
 }
