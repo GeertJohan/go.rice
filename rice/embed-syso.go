@@ -13,7 +13,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/GeertJohan/go.rice/embedded"
+	"github.com/JonathanTech/go.rice/embedded"
 	"github.com/akavel/rsrc/coff"
 )
 
