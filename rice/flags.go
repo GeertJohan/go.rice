@@ -17,6 +17,11 @@ var flags struct {
 		Executable string `long:"exec" description:"Executable to append" required:"true"`
 	} `command:"append"`
 
+	AppendSimple struct {
+		BoxPath []string `long:"box-path" short:"b" description:"Box path(s) to use. Bypasses code parsing to enable simpler use of boxes. Ignores import-path. Specify multiple times for more box paths to append" required:"true"`
+		Executable string `long:"exec" description:"Executable to append" required:"true"`
+	} `command:"append-simple"`
+
 	EmbedGo   struct{} `command:"embed-go" alias:"embed"`
 	EmbedSyso struct{} `command:"embed-syso"`
 	Clean     struct{} `command:"clean"`

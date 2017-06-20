@@ -2,6 +2,7 @@
 /example/example.exe
 /rice/rice
 /rice/rice.exe
+/.idea
 
 *.rice-box.go
 *.rice-box.syso
