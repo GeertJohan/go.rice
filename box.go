@@ -301,6 +301,34 @@ func (b *Box) MustBytes(name string) []byte {
 	return bts
 }
 
+// List returns a list of files within a box but is only usable with embedded resources
+func (b *Box) List() ([]string, error) {
+	// create slice to return
+	l := []string{}
+	// we don't support non-embedded types
+	if !b.IsEmbedded() {
+		return l, os.ErrInvalid
+	}
+	// get list of files
+	for f := range b.embed.Files {
+		l = append(l, f)
+	}
+	// if not found, return error
+	if len(l) == 0 {
+		return []string{}, os.ErrNotExist
+	}
+	return l, nil
+}
+
+// MustList returns the same as List, but without the error
+func (b *Box) MustList() []string {
+	l, err := b.List()
+	if err != nil {
+		panic(err)
+	}
+	return l
+}
+
 // String returns the content of the file with given name as string.
 func (b *Box) String(name string) (string, error) {
 	// check if box is embedded, optimized fast path
