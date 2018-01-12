@@ -530,7 +530,7 @@ func main() {
 
 	var buffer bytes.Buffer
 
-	err = writeBoxesGo(pkg, &buffer)
+	err = writeBoxesGo(pkg, &buffer, findBoxes(pkg))
 	if err != nil {
 		t.Error(err)
 		return
