@@ -52,7 +52,9 @@ func pkgForPath(path string) *build.Package {
 	}
 
 	// read full package information
-	pkg, err := build.Import(path, pwd, 0)
+	context := build.Default
+	context.BuildTags = flags.BuildTags
+	pkg, err := context.Import(path, pwd, 0)
 	if err != nil {
 		fmt.Printf("error reading package: %s\n", err)
 		os.Exit(1)

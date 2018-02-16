@@ -12,6 +12,7 @@ import (
 var flags struct {
 	Verbose     bool     `long:"verbose" short:"v" description:"Show verbose debug information"`
 	ImportPaths []string `long:"import-path" short:"i" description:"Import path(s) to use. Using PWD when left empty. Specify multiple times for more import paths to append"`
+	BuildTags []string	`long:"tags" short:"t" description:"list of build tags to consider satisfied during the embedding."`
 
 	Append struct {
 		Executable string `long:"exec" description:"Executable to append" required:"true"`
