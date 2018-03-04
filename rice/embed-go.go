@@ -138,25 +138,54 @@ func writeBoxesGo(pkg *build.Package, out io.Writer, boxMap map[string]bool) err
 
 func operationEmbedGo(pkg *build.Package) {
 	boxMap := findBoxes(pkg)
+	boxFilepath := filepath.Join(pkg.Dir, boxFilename)
 
 	// notify user when no calls to rice.FindBox are made
 	// this is an error and therefore os.Exit(1)
 	if len(boxMap) == 0 {
 		log.Printf("no calls to rice.FindBox() found: %s\n", pkg.ImportPath)
+		log.Printf("deleting embedded box file %s\n", boxFilepath)
+		err := os.Remove(boxFilepath)
+		if err != nil && !os.IsNotExist(err) {
+			log.Printf("error deleting embedded box file: %s\n", err)
+		}
 		os.Exit(1)
 	}
 
-	// create go file for box
-	boxFile, err := os.Create(filepath.Join(pkg.Dir, boxFilename))
+	var newContentBuffer bytes.Buffer
+	err := writeBoxesGo(pkg, &newContentBuffer, boxMap)
 	if err != nil {
-		log.Printf("error creating embedded box file: %s\n", err)
+		log.Printf("error getting embedded box file content: %s\n", err)
+		os.Exit(1)
+	}
+
+	boxFile, err := os.OpenFile(boxFilepath, os.O_RDWR|os.O_CREATE, 0666)
+	if err != nil {
+		log.Printf("error opening embedded box file %s: %s\n", boxFilepath, err)
 		os.Exit(1)
 	}
 	defer boxFile.Close()
 
-	err = writeBoxesGo(pkg, boxFile, boxMap)
+	currentContent, err := ioutil.ReadAll(boxFile)
+	if bytes.Compare(currentContent, newContentBuffer.Bytes()) == 0 {
+		log.Printf("skipping since content did not changed: %s\n", boxFilepath)
+		os.Exit(0)
+	}
+
+	err = boxFile.Truncate(0)
 	if err != nil {
-		log.Printf("error creating embedded box file: %s\n", err)
+		log.Printf("error truncating embedded box file %s: %s\n", boxFilepath, err)
 		os.Exit(1)
+	}
+
+	_, err = boxFile.Seek(0, io.SeekStart)
+	if err != nil {
+		log.Printf("error seeking embedded box file %s: %s\n", boxFilepath, err)
+		os.Exit(1)
+	}
+
+	_, err = io.Copy(boxFile, &newContentBuffer)
+	if err != nil {
+		log.Printf("error writing embedSource to file: %s\n", err)
 	}
 }
