@@ -15,8 +15,9 @@ func init() {
 	tmplEmbeddedBox, err = template.New("embeddedBox").Parse(`package {{.Package}}
 
 import (
-	"github.com/GeertJohan/go.rice/embedded"
 	"time"
+
+	"github.com/GeertJohan/go.rice/embedded"
 )
 
 {{range .Boxes}}
