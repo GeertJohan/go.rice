@@ -62,7 +62,7 @@ tmplMessage.Execute(os.Stdout, map[string]string{"Message": "Hello, world!"})
 
 Never call `FindBox()` or `MustFindBox()` from an `init()` function, as the boxes might have not been loaded at that time.
 
-**Calling FindBox and FindMustBox**
+**Calling FindBox and MustFindBox**
 
 Always call `FindBox()` or `MustFindBox()` with string literals e.g. `FindBox("example")`. Do not use string constants or variables. This will prevent the rice tool to fail with error `Error: found call to rice.FindBox, but argument must be a string literal.`.
 
