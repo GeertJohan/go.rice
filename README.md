@@ -133,7 +133,7 @@ go build
 This method changes an already built executable. It appends the resources as zip file to the binary. It makes compilation
 a lot faster and can be used with large resource files.
 
-Downsides for appending are that it requires `zip` to be installed and does not provide a working Seek method.
+The downside for appending is that it does not provide a working Seek method.
 
 Run the following commands to create a standalone executable.
 
