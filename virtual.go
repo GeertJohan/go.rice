@@ -12,7 +12,7 @@ import (
 
 //++ TODO: IDEA: merge virtualFile and virtualDir, this decreases work done by rice.File
 
-// Error indicating some function is not implemented yet (but available to satisfy an interface)
+// ErrNotImplemented indicates that some function is not implemented yet (but available to satisfy an interface)
 var ErrNotImplemented = errors.New("not implemented yet")
 
 // virtualFile is a 'stateful' virtual file.

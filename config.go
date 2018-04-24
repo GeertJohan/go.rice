@@ -3,6 +3,7 @@ package rice
 // LocateMethod defines how a box is located.
 type LocateMethod int
 
+// How to locate the boxes at runtime
 const (
 	LocateFS               = LocateMethod(iota) // Locate on the filesystem according to package path.
 	LocateAppended                              // Locate boxes appended to the executable.

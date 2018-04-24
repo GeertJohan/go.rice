@@ -80,8 +80,7 @@ func findBoxes(pkg *build.Package) map[string]bool {
 		var nextIdentIsBoxFunc bool
 		var nextBasicLitParamIsBoxName bool
 		var boxCall token.Pos
-		var variableToRemember string
-		var validVariablesForBoxes map[string]bool = make(map[string]bool)
+		var validVariablesForBoxes = make(map[string]bool)
 
 		ast.Inspect(f, func(node ast.Node) bool {
 			if node == nil {
@@ -93,7 +92,6 @@ func findBoxes(pkg *build.Package) map[string]bool {
 				var assign = node.(*ast.AssignStmt)
 				name, found := assign.Lhs[0].(*ast.Ident)
 				if found {
-					variableToRemember = name.Name
 					composite, first := assign.Rhs[0].(*ast.CompositeLit)
 					if first {
 						riceSelector, second := composite.Type.(*ast.SelectorExpr)
