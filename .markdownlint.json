@@ -1,0 +1,13 @@
+{
+  "default": true,
+  "first-header-h1": false,
+  "first-line-h1": false,
+  "no-trailing-punctuation": false,
+  "no-emphasis-as-header": false,
+  "no-hard-tabs": false,
+  "fenced-code-language": false,
+  "no-bare-urls": false,
+  "line-length": {
+    "line_length": 120
+  }
+}
