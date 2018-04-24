@@ -7,32 +7,37 @@ import (
 	"os"
 )
 
-func main() {
-	// parser arguments
-	parseArguments()
-
+func getPkgs() []*build.Package {
 	// find package for path
 	var pkgs []*build.Package
 	for _, importPath := range flags.ImportPaths {
 		pkg := pkgForPath(importPath)
 		pkgs = append(pkgs, pkg)
 	}
+	return pkgs
+}
+
+func main() {
+	// parser arguments
+	parseArguments()
 
 	// switch on the operation to perform
 	switch flagsParser.Active.Name {
 	case "embed", "embed-go":
-		for _, pkg := range pkgs {
+		for _, pkg := range getPkgs() {
 			operationEmbedGo(pkg)
 		}
 	case "embed-syso":
 		log.Println("WARNING: embedding .syso is experimental..")
-		for _, pkg := range pkgs {
+		for _, pkg := range getPkgs() {
 			operationEmbedSyso(pkg)
 		}
 	case "append":
-		operationAppend(pkgs)
+		operationAppendPkgs(getPkgs())
+	case "appendbox":
+		operationAppendBoxes(flags.AppendBox.Boxes)
 	case "clean":
-		for _, pkg := range pkgs {
+		for _, pkg := range getPkgs() {
 			operationClean(pkg)
 		}
 	}

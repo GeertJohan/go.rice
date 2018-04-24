@@ -17,6 +17,11 @@ var flags struct {
 		Executable string `long:"exec" description:"Executable to append" required:"true"`
 	} `command:"append"`
 
+	AppendBox struct {
+		Executable string   `long:"exec" description:"Executable to append" required:"true"`
+		Boxes      []string `long:"box" short:"b" description:"Box(es) to append (relative to PWD). Specify multiple times for more boxes to append"`
+	} `command:"appendbox"`
+
 	EmbedGo   struct{} `command:"embed-go" alias:"embed"`
 	EmbedSyso struct{} `command:"embed-syso"`
 	Clean     struct{} `command:"clean"`

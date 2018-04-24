@@ -24,10 +24,11 @@ resourcesand load those, instead of looking up files from disk.
 
 ### Installation
 
-Use `go get` to install the package the `rice` tool.
+Use `go get` and [dep](https://golang.github.io/dep/docs/installation.html) to install the package the `rice` tool.
 
 ```
-go get github.com/GeertJohan/go.rice
+go get -d github.com/GeertJohan/go.rice
+dep ensure
 go get github.com/GeertJohan/go.rice/rice
 ```
 
@@ -131,7 +132,8 @@ go build
 **Append resources to executable as zip file**
 
 This method changes an already built executable. It appends the resources as zip file to the binary. It makes compilation
-a lot faster and can be used with large resource files.
+a lot faster and can be used with large resource files. It scans the source code for references to `rice.FindBox(...)` or
+`rice.MustFindBox(...)`, if this is not possible you can alternatively use the `appendbox` command.
 
 The downside for appending is that it does not provide a working Seek method.
 
@@ -142,9 +144,18 @@ go build -o example
 rice append --exec example
 ```
 
-**Note: requires zip command to be installed**
+#### appendbox
 
-On windows, install zip from http://gnuwin32.sourceforge.net/packages/zip.htm or cygwin/msys toolsets.
+Similar to the `append` command, this method changes an already-built executable by adding appending a zipfile.
+The difference from `append` is that it does not require for the source code to be accessible; in order to achieve
+this, you have to specify a list of boxes to append.
+
+Run the following commands to create a standalone executable.
+
+```
+go build -o example
+rice appendbox --exec example -b http-files -b cssfiles
+```
 
 #### Help information
 

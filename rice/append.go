@@ -13,7 +13,42 @@ import (
 	zipexe "github.com/daaku/go.zipexe"
 )
 
-func operationAppend(pkgs []*build.Package) {
+// operationAppendPkgs scans the source files, looking for referenced boxes
+func operationAppendPkgs(pkgs []*build.Package) {
+	// find abs path for binary file
+	binfileName, err := filepath.Abs(flags.Append.Executable)
+	if err != nil {
+		fmt.Printf("Error finding absolute path for executable to append: %s\n", err)
+		os.Exit(1)
+	}
+
+	boxMap := make(map[string]string)
+	for _, pkg := range pkgs {
+		// find boxes for this command
+		boxes := findBoxes(pkg)
+
+		// notify user when no calls to rice.FindBox are made (is this an error and therefore os.Exit(1) ?
+		if len(boxes) == 0 {
+			fmt.Printf("no calls to rice.FindBox() or rice.MustFindBox() found in import path `%s`\n", pkg.ImportPath)
+			continue
+		}
+
+		verbosef("\n")
+
+		for boxname := range boxes {
+			appendedBoxName := strings.Replace(boxname, `/`, `-`, -1)
+
+			// walk box path's and insert files
+			boxPath := filepath.Clean(filepath.Join(pkg.Dir, boxname))
+
+			boxMap[appendedBoxName] = boxPath
+		}
+	}
+
+	operationAppend(binfileName, boxMap)
+}
+
+func operationAppend(binfileName string, boxMap map[string]string) {
 	// create tmp zipfile
 	tmpZipfileName := filepath.Join(os.TempDir(), fmt.Sprintf("ricebox-%d-%s.zip", time.Now().Unix(), randomString(10)))
 	verbosef("Will create tmp zipfile: %s\n", tmpZipfileName)
@@ -27,12 +62,6 @@ func operationAppend(pkgs []*build.Package) {
 		os.Remove(tmpZipfileName)
 	}()
 
-	// find abs path for binary file
-	binfileName, err := filepath.Abs(flags.Append.Executable)
-	if err != nil {
-		fmt.Printf("Error finding absolute path for executable to append: %s\n", err)
-		os.Exit(1)
-	}
 	verbosef("Will append to file: %s\n", binfileName)
 
 	// check that command doesn't already have zip appended
@@ -61,70 +90,54 @@ func operationAppend(pkgs []*build.Package) {
 	// write the zip offset into the zip data
 	zipWriter.SetOffset(binfileInfo.Size())
 
-	for _, pkg := range pkgs {
-		// find boxes for this command
-		boxMap := findBoxes(pkg)
+	for appendedBoxName, boxPath := range boxMap {
+		filepath.Walk(boxPath, func(path string, info os.FileInfo, err error) error {
+			if info == nil {
+				fmt.Printf("Error: box \"%s\" not found on disk\n", path)
+				os.Exit(1)
+			}
+			// create zipFilename
+			zipFileName := filepath.Join(appendedBoxName, strings.TrimPrefix(path, boxPath))
 
-		// notify user when no calls to rice.FindBox are made (is this an error and therefore os.Exit(1) ?
-		if len(boxMap) == 0 {
-			fmt.Printf("no calls to rice.FindBox() or rice.MustFindBox() found in import path `%s`\n", pkg.ImportPath)
-			continue
-		}
-
-		verbosef("\n")
-
-		for boxname := range boxMap {
-			appendedBoxName := strings.Replace(boxname, `/`, `-`, -1)
-
-			// walk box path's and insert files
-			boxPath := filepath.Clean(filepath.Join(pkg.Dir, boxname))
-			filepath.Walk(boxPath, func(path string, info os.FileInfo, err error) error {
-				if info == nil {
-					fmt.Printf("Error: box \"%s\" not found on disk\n", path)
-					os.Exit(1)
-				}
-				// create zipFilename
-				zipFileName := filepath.Join(appendedBoxName, strings.TrimPrefix(path, boxPath))
-				// write directories as empty file with comment "dir"
-				if info.IsDir() {
-					_, err := zipWriter.CreateHeader(&zip.FileHeader{
-						Name:    zipFileName,
-						Comment: "dir",
-					})
-					if err != nil {
-						fmt.Printf("Error creating dir in tmp zip: %s\n", err)
-						os.Exit(1)
-					}
-					return nil
-				}
-
-				// create zipFileWriter
-				zipFileHeader, err := zip.FileInfoHeader(info)
+			// write directories as empty file with comment "dir"
+			if info.IsDir() {
+				_, err := zipWriter.CreateHeader(&zip.FileHeader{
+					Name:    zipFileName,
+					Comment: "dir",
+				})
 				if err != nil {
-					fmt.Printf("Error creating zip FileHeader: %v\n", err)
+					fmt.Printf("Error creating dir in tmp zip: %s\n", err)
 					os.Exit(1)
 				}
-				zipFileHeader.Name = zipFileName
-				zipFileWriter, err := zipWriter.CreateHeader(zipFileHeader)
-				if err != nil {
-					fmt.Printf("Error creating file in tmp zip: %s\n", err)
-					os.Exit(1)
-				}
-				srcFile, err := os.Open(path)
-				if err != nil {
-					fmt.Printf("Error opening file to append: %s\n", err)
-					os.Exit(1)
-				}
-				_, err = io.Copy(zipFileWriter, srcFile)
-				if err != nil {
-					fmt.Printf("Error copying file contents to zip: %s\n", err)
-					os.Exit(1)
-				}
-				srcFile.Close()
-
 				return nil
-			})
-		}
+			}
+
+			// create zipFileWriter
+			zipFileHeader, err := zip.FileInfoHeader(info)
+			if err != nil {
+				fmt.Printf("Error creating zip FileHeader: %v\n", err)
+				os.Exit(1)
+			}
+			zipFileHeader.Name = zipFileName
+			zipFileWriter, err := zipWriter.CreateHeader(zipFileHeader)
+			if err != nil {
+				fmt.Printf("Error creating file in tmp zip: %s\n", err)
+				os.Exit(1)
+			}
+			srcFile, err := os.Open(path)
+			if err != nil {
+				fmt.Printf("Error opening file to append: %s\n", err)
+				os.Exit(1)
+			}
+			_, err = io.Copy(zipFileWriter, srcFile)
+			if err != nil {
+				fmt.Printf("Error copying file contents to zip: %s\n", err)
+				os.Exit(1)
+			}
+			srcFile.Close()
+
+			return nil
+		})
 	}
 
 	err = zipWriter.Close()
@@ -154,4 +167,22 @@ func operationAppend(pkgs []*build.Package) {
 		fmt.Printf("Error appending zipfile to executable: %s\n", err)
 		os.Exit(1)
 	}
+}
+
+// operationAppendBoxes doesn't need access to source code, so is useful if you want to ship a generic
+// binary and allow others to append their files to that binary. It does however rely upon the user
+// to specify all required box paths, but that doesn't seem unreasonable.
+func operationAppendBoxes(boxes []string) {
+	// find abs path for binary file
+	binfileName, err := filepath.Abs(flags.AppendBox.Executable)
+	if err != nil {
+		fmt.Printf("Error finding absolute path for executable to append: %s\n", err)
+		os.Exit(1)
+	}
+
+	boxMap := make(map[string]string)
+	for _, box := range boxes {
+		boxMap[box] = box
+	}
+	operationAppend(binfileName, boxMap)
 }
