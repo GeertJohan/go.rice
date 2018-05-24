@@ -182,7 +182,8 @@ func operationAppendBoxes(boxes []string) {
 
 	boxMap := make(map[string]string)
 	for _, box := range boxes {
-		boxMap[box] = box
+		appendedBoxName := strings.Replace(box, `/`, `-`, -1)
+		boxMap[appendedBoxName] = box
 	}
 	operationAppend(binfileName, boxMap)
 }
