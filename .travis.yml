@@ -13,10 +13,10 @@ install:
     - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
     - dep ensure
     - env
-    - if [ "${TRAVIS_GO_VERSION%.*}" != "1.5" ]; then go get github.com/golang/lint/golint; fi
+    - if [ "${TRAVIS_GO_VERSION%.*}" != "1.6" ]; then go get github.com/golang/lint/golint; fi
 
 script:
     - go build -x ./...
     - go test -cover ./...
     - go vet ./...
-    - if [ "${TRAVIS_GO_VERSION%.*}" != "1.5" ]; then golint .; fi
+    - if [ "${TRAVIS_GO_VERSION%.*}" != "1.6" ]; then golint .; fi
