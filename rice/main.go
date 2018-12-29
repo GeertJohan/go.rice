@@ -5,11 +5,21 @@ import (
 	"go/build"
 	"log"
 	"os"
+	"runtime/pprof"
 )
 
 func main() {
 	// parser arguments
 	parseArguments()
+
+	if flags.CpuProfile != "" {
+		f, err := os.Create(flags.CpuProfile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
 
 	// find package for path
 	var pkgs []*build.Package
@@ -40,6 +50,15 @@ func main() {
 	// all done
 	verbosef("\n")
 	verbosef("rice finished successfully\n")
+
+	if flags.MemProfile != "" {
+		f, err := os.Create(flags.MemProfile)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pprof.WriteHeapProfile(f)
+		f.Close()
+	}
 }
 
 // helper function to get *build.Package for given path
