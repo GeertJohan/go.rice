@@ -10,6 +10,8 @@ import (
 
 // flags
 var flags struct {
+	MemProfile  string   `long:"memprofile" description:"Write memory profile to this file"`
+	CpuProfile  string   `long:"cpuprofile" description:"Write cpu profile to this file"`
 	Verbose     bool     `long:"verbose" short:"v" description:"Show verbose debug information"`
 	ImportPaths []string `long:"import-path" short:"i" description:"Import path(s) to use. Using PWD when left empty. Specify multiple times for more import paths to append"`
 

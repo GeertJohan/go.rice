@@ -520,6 +520,34 @@ func main() {
 			"foo/new\nline",
 			[]byte("File with newline in name. Yes, this is possible."),
 		},
+		{
+			"foo/fast{%template%}",
+			[]byte("Fasttemplate"),
+		},
+		{
+			"foo/fast{%template",
+			[]byte("Fasttemplate open"),
+		},
+		{
+			"foo/fast%}template",
+			[]byte("Fasttemplate close"),
+		},
+		{
+			"foo/fast{%dir%}/test.txt",
+			[]byte("Fasttemplate directory"),
+		},
+		{
+			"foo/fast{%dir/test.txt",
+			[]byte("Fasttemplate directory open"),
+		},
+		{
+			"foo/fast%}dir/test.txt",
+			[]byte("Fasttemplate directory close"),
+		},
+		{
+			"foo/fast{$%template%$}",
+			[]byte("Fasttemplate double escaping"),
+		},
 	}
 	pkg, cleanup, err := setUpTestPkg("foobar", sourceFiles)
 	defer cleanup()
