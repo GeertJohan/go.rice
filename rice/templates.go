@@ -48,8 +48,9 @@ func init() {
 	}).Parse(`package {{.Package}}
 
 import (
-	"github.com/GeertJohan/go.rice/embedded"
 	"time"
+
+	"github.com/GeertJohan/go.rice/embedded"
 )
 
 {{range .Boxes}}
