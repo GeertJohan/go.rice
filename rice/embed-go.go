@@ -47,7 +47,7 @@ func writeBoxesGo(pkg *build.Package, out io.Writer) error {
 		// read box metadata
 		boxInfo, ierr := os.Stat(boxPath)
 		if ierr != nil {
-			return fmt.Errorf("Error: unable to access box at %s\n", boxPath)
+			return fmt.Errorf("unable to access box at %s", boxPath)
 		}
 
 		// create box datastructure (used by template)
@@ -59,14 +59,14 @@ func writeBoxesGo(pkg *build.Package, out io.Writer) error {
 		}
 
 		if !boxInfo.IsDir() {
-			return fmt.Errorf("Error: Box %s must point to a directory but points to %s instead\n",
+			return fmt.Errorf("box %s must point to a directory but points to %s instead",
 				boxname, boxPath)
 		}
 
 		// fill box datastructure with file data
 		err := filepath.Walk(boxPath, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
-				return fmt.Errorf("error walking box: %s\n", err)
+				return fmt.Errorf("error walking box: %s", err)
 			}
 
 			filename := strings.TrimPrefix(path, boxPath)
@@ -98,7 +98,7 @@ func writeBoxesGo(pkg *build.Package, out io.Writer) error {
 				verbosef("\tincludes file: '%s'\n", fileData.FileName)
 				fileData.Content, err = ioutil.ReadFile(path)
 				if err != nil {
-					return fmt.Errorf("error reading file content while walking box: %s\n", err)
+					return fmt.Errorf("failed reading file content while walking box: %s", err)
 				}
 				box.Files = append(box.Files, fileData)
 
@@ -106,7 +106,7 @@ func writeBoxesGo(pkg *build.Package, out io.Writer) error {
 				pathParts := strings.Split(fileData.FileName, "/")
 				parentDir := box.Dirs[strings.Join(pathParts[:len(pathParts)-1], "/")]
 				if parentDir == nil {
-					return fmt.Errorf("Error: parent of %s is not within the box\n", path)
+					return fmt.Errorf("parent of %s is not within the box", path)
 				}
 				parentDir.ChildFiles = append(parentDir.ChildFiles, fileData)
 			}
@@ -127,19 +127,19 @@ func writeBoxesGo(pkg *build.Package, out io.Writer) error {
 		embedFileDataType{pkg.Name, boxes},
 	)
 	if err != nil {
-		return fmt.Errorf("error writing embedded box to file (template execute): %s\n", err)
+		return fmt.Errorf("error writing embedded box to file (template execute): %s", err)
 	}
 
 	// format the source code
 	embedSource, err := format.Source(embedSourceUnformated.Bytes())
 	if err != nil {
-		return fmt.Errorf("error formatting embedSource: %s\n", err)
+		return fmt.Errorf("error formatting embedSource: %s", err)
 	}
 
 	// write source to file
 	_, err = io.Copy(out, bytes.NewBuffer(embedSource))
 	if err != nil {
-		return fmt.Errorf("error writing embedSource to file: %s\n", err)
+		return fmt.Errorf("error writing embedSource to file: %s", err)
 	}
 	return nil
 }
