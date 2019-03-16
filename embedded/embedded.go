@@ -30,6 +30,10 @@ func (e *EmbeddedBox) Link() {
 		ed.ChildFiles = make([]*EmbeddedFile, 0)
 	}
 	for path, ed := range e.Dirs {
+		// skip for root, it'll create a recursion
+		if path == "" {
+			continue
+		}
 		parentDirpath, _ := filepath.Split(path)
 		if strings.HasSuffix(parentDirpath, "/") {
 			parentDirpath = parentDirpath[:len(parentDirpath)-1]
