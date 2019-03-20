@@ -86,7 +86,8 @@ func main() {
 			[]byte("Fasttemplate double escaping"),
 		},
 	}
-	pkg, cleanup, err := setUpTestPkg("foobar", sourceFiles)
+	withIgnoredFiles := append(sourceFiles, sourceFile{"foo/rice-box.go", []byte("package main\nfunc init() {\n}")}, sourceFile{"foo/_amd64.rice-box.syso", []byte{}})
+	pkg, cleanup, err := setUpTestPkg("foobar", withIgnoredFiles)
 	defer cleanup()
 	if err != nil {
 		t.Error(err)

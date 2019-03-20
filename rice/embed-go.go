@@ -92,7 +92,7 @@ func writeBoxesGo(pkg *build.Package, out io.Writer) error {
 					parentDir := box.Dirs[strings.Join(pathParts[:len(pathParts)-1], "/")]
 					parentDir.ChildDirs = append(parentDir.ChildDirs, dirData)
 				}
-			} else {
+			} else if !generated(filename) {
 				fileData := &fileDataType{
 					Identifier: "file" + nextIdentifier(),
 					FileName:   filename,
