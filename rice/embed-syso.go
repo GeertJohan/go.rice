@@ -17,6 +17,8 @@ import (
 	"github.com/akavel/rsrc/coff"
 )
 
+const sysoBoxSuffix = ".rice-box.syso"
+
 type sizedReader struct {
 	*bytes.Reader
 }
@@ -133,7 +135,7 @@ func operationEmbedSyso(pkg *build.Package) {
 					parentDir := box.Dirs[strings.Join(pathParts[:len(pathParts)-1], "/")]
 					parentDir.ChildDirs = append(parentDir.ChildDirs, embeddedDir)
 				}
-			} else {
+			} else if !generated(filename) {
 				embeddedFile := &embedded.EmbeddedFile{
 					Filename:    filename,
 					FileModTime: info.ModTime(),
@@ -196,7 +198,7 @@ func createCoffSyso(boxFilename string, symname string, arch string, data []byte
 	boxCoff.AddData("_bricebox_"+symname, sizedReader{bytes.NewReader(data)})
 	boxCoff.AddData("_ericebox_"+symname, io.NewSectionReader(strings.NewReader("\000\000"), 0, 2)) // TODO: why? copied from rsrc, which copied it from as-generated
 	boxCoff.Freeze()
-	err := writeCoff(boxCoff, boxFilename+"_"+arch+".rice-box.syso")
+	err := writeCoff(boxCoff, boxFilename+"_"+arch+sysoBoxSuffix)
 	if err != nil {
 		fmt.Printf("error writing %s coff/.syso: %v\n", arch, err)
 		os.Exit(1)
