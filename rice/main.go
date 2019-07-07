@@ -25,6 +25,7 @@ func main() {
 	var pkgs []*build.Package
 	for _, importPath := range flags.ImportPaths {
 		pkg := pkgForPath(importPath)
+		pkg.AllTags = flags.Tags
 		pkgs = append(pkgs, pkg)
 	}
 

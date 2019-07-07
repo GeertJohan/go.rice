@@ -22,6 +22,8 @@ var flags struct {
 	EmbedGo   struct{} `command:"embed-go" alias:"embed"`
 	EmbedSyso struct{} `command:"embed-syso"`
 	Clean     struct{} `command:"clean"`
+
+	Tags []string `long:"tags" description:"Tags to use"`
 }
 
 // flags parser
