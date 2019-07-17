@@ -13,8 +13,10 @@ import (
 
 // appendedBox defines an appended box
 type appendedBox struct {
-	Name  string                   // box name
-	Files map[string]*appendedFile // appended files (*zip.File) by full path
+	Name  string // box name
+	Files map[string]*appendedFile
+	Time  time.Time
+	// appended files (*zip.File) by full path
 }
 
 type appendedFile struct {
@@ -59,6 +61,7 @@ func init() {
 			box = &appendedBox{
 				Name:  boxName,
 				Files: make(map[string]*appendedFile),
+				Time: f.ModTime(),
 			}
 			appendedBoxes[boxName] = box
 		}
