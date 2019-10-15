@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
@@ -85,6 +86,10 @@ func operationAppend(pkgs []*build.Package) {
 				}
 				// create zipFilename
 				zipFileName := filepath.Join(appendedBoxName, strings.TrimPrefix(path, boxPath))
+				if runtime.GOOS == "windows" {
+					// allow appending to linux executables on windows
+					zipFileName = strings.Replace(zipFileName, `\`, `/`, -1)
+				}
 				// write directories as empty file with comment "dir"
 				if info.IsDir() {
 					header := &zip.FileHeader{
