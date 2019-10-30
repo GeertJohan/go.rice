@@ -60,7 +60,7 @@ func init() {
 			box = &appendedBox{
 				Name:  boxName,
 				Files: make(map[string]*appendedFile),
-				Time:  f.ModTime(),
+				Time:  f.Modified,
 			}
 			appendedBoxes[boxName] = box
 		}
@@ -73,7 +73,7 @@ func init() {
 			af.dir = true
 			af.dirInfo = &appendedDirInfo{
 				name: filepath.Base(af.zipFile.Name),
-				time: af.zipFile.ModTime(),
+				time: af.zipFile.Modified,
 			}
 		} else {
 			// this is a file, we need it's contents so we can create a bytes.Reader when the file is opened

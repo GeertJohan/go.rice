@@ -52,13 +52,14 @@ func findBox(name string, order []LocateMethod) (*Box, error) {
 
 		case LocateFS:
 			// resolve absolute directory path
-			err := b.resolveAbsolutePathFromCaller()
+			err = b.resolveAbsolutePathFromCaller()
 			if err != nil {
 				continue
 			}
 			// check if absolutePath exists on filesystem
-			info, err := os.Stat(b.absolutePath)
-			if err != nil {
+			info, statErr := os.Stat(b.absolutePath)
+			if statErr != nil {
+				err = statErr
 				continue
 			}
 			// check if absolutePath is actually a directory
@@ -69,13 +70,14 @@ func findBox(name string, order []LocateMethod) (*Box, error) {
 			return b, nil
 		case LocateWorkingDirectory:
 			// resolve absolute directory path
-			err := b.resolveAbsolutePathFromWorkingDirectory()
+			err = b.resolveAbsolutePathFromWorkingDirectory()
 			if err != nil {
 				continue
 			}
 			// check if absolutePath exists on filesystem
-			info, err := os.Stat(b.absolutePath)
-			if err != nil {
+			info, statErr := os.Stat(b.absolutePath)
+			if statErr != nil {
+				err = statErr
 				continue
 			}
 			// check if absolutePath is actually a directory

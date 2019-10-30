@@ -115,13 +115,13 @@ func (vf *virtualFile) seek(offset int64, whence int) (int64, error) {
 
 	//++ TODO: check if this is correct implementation for seek
 	switch whence {
-	case os.SEEK_SET:
+	case io.SeekStart:
 		//++ check if new offset isn't out of bounds, set e when it is, then break out of switch
 		vf.offset = offset
-	case os.SEEK_CUR:
+	case io.SeekCurrent:
 		//++ check if new offset isn't out of bounds, set e when it is, then break out of switch
 		vf.offset += offset
-	case os.SEEK_END:
+	case io.SeekEnd:
 		//++ check if new offset isn't out of bounds, set e when it is, then break out of switch
 		vf.offset = int64(len(vf.EmbeddedFile.Content)) - offset
 	}
