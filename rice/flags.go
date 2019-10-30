@@ -23,7 +23,7 @@ var flags struct {
 	EmbedSyso struct{} `command:"embed-syso"`
 	Clean     struct{} `command:"clean"`
 
-	Tags []string `long:"tags" description:"Tags to use"`
+	Tags []string `long:"tags" description:"Tags to use with the implicit go build"`
 }
 
 // flags parser
