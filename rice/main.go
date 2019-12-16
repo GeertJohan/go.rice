@@ -33,18 +33,18 @@ func main() {
 	switch flagsParser.Active.Name {
 	case "embed", "embed-go":
 		for _, pkg := range pkgs {
-			operationEmbedGo(pkg)
+			operationEmbedGo(pkg, flags.OutputPath)
 		}
 	case "embed-syso":
 		log.Println("WARNING: embedding .syso is experimental..")
 		for _, pkg := range pkgs {
-			operationEmbedSyso(pkg)
+			operationEmbedSyso(pkg, flags.OutputPath)
 		}
 	case "append":
 		operationAppend(pkgs)
 	case "clean":
 		for _, pkg := range pkgs {
-			operationClean(pkg)
+			operationClean(pkg, flags.OutputPath)
 		}
 	}
 

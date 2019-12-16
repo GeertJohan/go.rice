@@ -7,8 +7,12 @@ import (
 	"path/filepath"
 )
 
-func operationClean(pkg *build.Package) {
-	filepath.Walk(pkg.Dir, func(filename string, info os.FileInfo, err error) error {
+func operationClean(pkg *build.Package, outputPath string) {
+	if len(outputPath) == 0 {
+		outputPath = pkg.Dir
+	}
+
+	filepath.Walk(outputPath, func(filename string, info os.FileInfo, err error) error {
 		if err != nil {
 			fmt.Printf("error walking pkg dir to clean files: %v\n", err)
 			os.Exit(1)

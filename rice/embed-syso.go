@@ -70,7 +70,10 @@ type embeddedSysoHelperData struct {
 	Symname string
 }
 
-func operationEmbedSyso(pkg *build.Package) {
+func operationEmbedSyso(pkg *build.Package, outputPath string) {
+	if len(outputPath) == 0 {
+		outputPath = pkg.Dir
+	}
 
 	regexpSynameReplacer := regexp.MustCompile(`[^a-z0-9_]`)
 
@@ -86,7 +89,7 @@ func operationEmbedSyso(pkg *build.Package) {
 
 	for boxname := range boxMap {
 		// find path and filename for this box
-		boxPath := filepath.Join(pkg.Dir, boxname)
+		boxPath := filepath.Join(outputPath, boxname)
 		boxFilename := strings.Replace(boxname, "/", "-", -1)
 		boxFilename = strings.Replace(boxFilename, "..", "back", -1)
 		boxFilename = strings.Replace(boxFilename, ".", "-", -1)

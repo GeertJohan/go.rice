@@ -154,9 +154,13 @@ func writeBoxesGo(pkg *build.Package, out io.Writer) error {
 	return nil
 }
 
-func operationEmbedGo(pkg *build.Package) {
+func operationEmbedGo(pkg *build.Package, outputPath string) {
+	if len(outputPath) == 0 {
+		outputPath = pkg.Dir
+	}
+
 	// create go file for box
-	boxFile, err := os.Create(filepath.Join(pkg.Dir, boxFilename))
+	boxFile, err := os.Create(filepath.Join(outputPath, boxFilename))
 	if err != nil {
 		log.Printf("error creating embedded box file: %s\n", err)
 		os.Exit(1)
