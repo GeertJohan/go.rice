@@ -21,29 +21,21 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
-	// find package for path
-	var pkgs []*build.Package
-	for _, importPath := range flags.ImportPaths {
-		pkg := pkgForPath(importPath)
-		pkg.AllTags = flags.Tags
-		pkgs = append(pkgs, pkg)
-	}
-
 	// switch on the operation to perform
 	switch flagsParser.Active.Name {
 	case "embed", "embed-go":
-		for _, pkg := range pkgs {
+		for _, pkg := range getPkgs() {
 			operationEmbedGo(pkg)
 		}
 	case "embed-syso":
 		log.Println("WARNING: embedding .syso is experimental..")
-		for _, pkg := range pkgs {
+		for _, pkg := range getPkgs() {
 			operationEmbedSyso(pkg)
 		}
 	case "append":
-		operationAppend(pkgs)
+		operationAppend(getPkgs())
 	case "clean":
-		for _, pkg := range pkgs {
+		for _, pkg := range getPkgs() {
 			operationClean(pkg)
 		}
 	}
@@ -60,6 +52,18 @@ func main() {
 		pprof.WriteHeapProfile(f)
 		f.Close()
 	}
+}
+
+// get all packages from import path
+func getPkgs() []*build.Package {
+	// find package for path
+	var pkgs []*build.Package
+	for _, importPath := range flags.ImportPaths {
+		pkg := pkgForPath(importPath)
+		pkg.AllTags = flags.Tags
+		pkgs = append(pkgs, pkg)
+	}
+	return pkgs
 }
 
 // helper function to get *build.Package for given path
