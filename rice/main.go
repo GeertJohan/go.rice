@@ -34,6 +34,8 @@ func main() {
 		}
 	case "append":
 		operationAppend(getPkgs())
+	case "append-dir":
+		operationAppendDir(flags.AppendDir.Dirs)
 	case "clean":
 		for _, pkg := range getPkgs() {
 			operationClean(pkg)

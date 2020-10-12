@@ -36,11 +36,25 @@ func operationAppend(pkgs []*build.Package) {
 			boxes[appendedBoxName] = boxPath
 		}
 	}
-	appendBoxes(boxes)
+	appendBoxes(flags.Append.Executable, boxes)
+}
+
+func operationAppendDir(dirs []string) {
+	boxes := make(map[string]string)
+	for _, dir := range dirs {
+		appendedBoxName := strings.Replace(dir, `/`, `-`, -1)
+		boxes[appendedBoxName] = dir
+	}
+
+	if len(flags.AppendDir.Dirs) == 0 {
+		fmt.Print("You should specify at least one directory to append. Please use -d or --dir option.\n")
+		os.Exit(1)
+	}
+	appendBoxes(flags.AppendDir.Executable, boxes)
 }
 
 // append boxes (key: box name, value: filesystem path)
-func appendBoxes(boxes map[string]string) {
+func appendBoxes(executable string, boxes map[string]string) {
 	// create tmp zipfile
 	tmpZipfileName := filepath.Join(os.TempDir(), fmt.Sprintf("ricebox-%d-%s.zip", time.Now().Unix(), randomString(10)))
 	verbosef("Will create tmp zipfile: %s\n", tmpZipfileName)
@@ -55,7 +69,7 @@ func appendBoxes(boxes map[string]string) {
 	}()
 
 	// find abs path for binary file
-	binfileName, err := filepath.Abs(flags.Append.Executable)
+	binfileName, err := filepath.Abs(executable)
 	if err != nil {
 		fmt.Printf("Error finding absolute path for executable to append: %s\n", err)
 		os.Exit(1)

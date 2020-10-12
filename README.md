@@ -116,6 +116,17 @@ go build -o example
 rice append --exec example
 ```
 
+### `rice append-dir`: Append directories to executable as zip file
+
+Similar to the `append` command, this method changes an already-built executable by adding appending a zipfile. The difference from `append` is that it does not require for the source code to be accessible; in order to achieve this, you have to specify a list of directories to append.
+
+Run the following commands to create a standalone executable.
+
+```bash
+go build -o example
+rice append --exec example -d foo -d bar
+```
+
 ## Help information
 
 Run `rice --help` for information about all flags and subcommands.
