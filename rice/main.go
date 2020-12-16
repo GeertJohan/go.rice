@@ -38,9 +38,6 @@ func main() {
 	case "embed-syso":
 		log.Println("WARNING: embedding .syso is experimental..")
 		log.Fatalln("FATAL: embed-syso is broken and will remain unusable until further notice. Please see https://github.com/GeertJohan/go.rice/issues/162")
-		// for _, pkg := range pkgs {
-		// 	operationEmbedSyso(pkg)
-		// }
 	case "append":
 		operationAppend(pkgs)
 	case "clean":
