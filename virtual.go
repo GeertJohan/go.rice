@@ -88,13 +88,14 @@ func (vf *virtualFile) read(bts []byte) (int, error) {
 		}
 	}
 
+	if vf.offset == int64(len(vf.Content)) {
+		return 0, io.EOF
+	}
+
 	end := vf.offset + int64(len(bts))
 
 	if end >= int64(len(vf.Content)) {
-		// end of file, so return what we have + EOF
-		n := copy(bts, vf.Content[vf.offset:])
-		vf.offset = 0
-		return n, io.EOF
+		end = int64(len(vf.Content))
 	}
 
 	n := copy(bts, vf.Content[vf.offset:end])

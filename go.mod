@@ -9,5 +9,6 @@ require (
 	github.com/davecgh/go-spew v1.1.1
 	github.com/jessevdk/go-flags v1.4.0
 	github.com/nkovacs/streamquote v1.0.0
+	github.com/stretchr/testify v1.6.1
 	github.com/valyala/fasttemplate v1.0.1
 )
