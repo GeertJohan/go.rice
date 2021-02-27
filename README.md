@@ -5,6 +5,8 @@
 
 go.rice is a [Go](http://golang.org) package that makes working with resources such as html,js,css,images and templates easy. During development `go.rice` will load required files directly from disk. Upon deployment it's easy to add all resource files to a executable using the `rice` tool, without changing the source code for your package. go.rice provides methods to add resources to a binary in different scenarios.
 
+As of Go 1.16, the [embed](https://golang.org/pkg/embed) package from the standard library can be used instead.
+
 ## What does it do
 
 The first thing go.rice does is finding the correct absolute path for your resource files. Say you are executing a binary in your home directory, but your `html-files` are in `$GOPATH/src/yourApplication/html-files`. `go.rice` will lookup the correct path for that directory (relative to the location of yourApplication). All you have to do is include the resources using `rice.FindBox("html-files")`.
