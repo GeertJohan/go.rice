@@ -13,11 +13,11 @@ This works fine when the source is available to the machine executing the binary
 
 ## Installation
 
-Use `go get` to install the package the `rice` tool.
+Use `go install` to install the package the `rice` tool.
 
 ```bash
-go get github.com/GeertJohan/go.rice
-go get github.com/GeertJohan/go.rice/rice
+go install github.com/GeertJohan/go.rice@latest
+go install github.com/GeertJohan/go.rice/rice@latest
 ```
 
 ## Package usage
